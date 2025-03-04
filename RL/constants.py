@@ -37,14 +37,16 @@ FEET_SITES = [
 ]
 
 LEFT_FEET_GEOMS = [
-    "left_foot_pos",
+    "FOOT_LEFT",
 ]
 
 RIGHT_FEET_GEOMS = [
-    "right_foot_pos",
+    "FOOT_RIGHT",
 ]
 
 FEET_GEOMS = LEFT_FEET_GEOMS + RIGHT_FEET_GEOMS
+
+FEET_POS_SENSOR = ["left_foot_pos", "right_foot_pos"]
 
 HIP_JOINT_NAMES = [
     "left_hip_yaw",

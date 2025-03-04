@@ -22,7 +22,7 @@
       friction="1.0"/>
   </worldbody>
 
-  <!--keyframe>
+  <keyframe>
     <key name="init_pose"
       qpos="
       0 0 0.26
@@ -37,5 +37,19 @@
       -0.2
       -0.45
       -0.2"/>
-  </keyframe-->
+    <key name="zero_pose"
+      qpos="
+      0 0 0.26
+      1 0 0 0
+      0.0
+      0.0
+      0.0
+      0.0
+      0.0
+      0.0
+      0.0
+      0.0
+      0.0
+      0.0"/>
+  </keyframe>
 </mujoco>
