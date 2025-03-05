@@ -5,9 +5,9 @@ import logging
 
 import colorlogging
 
-from playground.common import randomize as zbot_randomize
-from playground.common.runner import BaseRunner, RunnerConfig
-from playground.zbot import joystick as zbot_joystick, zbot_constants
+import randomize as BD5_randomize
+from common.runner import BaseRunner, RunnerConfig
+import joystick as zbot_joystick, constants
 
 logger = logging.getLogger(__name__)
 
@@ -18,16 +18,16 @@ class ZBotRunner(BaseRunner):
         env_config = zbot_joystick.default_config()
         env = zbot_joystick.Joystick(task=task)
         eval_env = zbot_joystick.Joystick(task=task)
-        randomizer = zbot_randomize.domain_randomize
+        randomizer = BD5_randomize.domain_randomize
         return RunnerConfig(env_config, env, eval_env, randomizer)
 
     @classmethod
     def get_root_body(cls) -> str:
-        return zbot_constants.ROOT_BODY
+        return constants.ROOT_BODY
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="ZBot Runner Script")
+    parser = argparse.ArgumentParser(description="BD5 Runner Script")
     parser.add_argument("--env", type=str, default="ZbotJoystickFlatTerrain", help="Environment to run")
     parser.add_argument("--task", type=str, default="flat_terrain", help="Task to run")
     parser.add_argument("--debug", action="store_true", help="Run in debug mode with minimal parameters")

@@ -415,7 +415,7 @@ class Joystick(BD5_base.BD5Env):
         sin = jp.sin(info["phase"])
         phase = jp.concatenate([cos, sin])
 
-        # Real robot state observation n=58
+        # Real robot state observation n=60
         state = jp.hstack(
             [
                 noisy_gravity,  # 3
@@ -425,7 +425,7 @@ class Joystick(BD5_base.BD5Env):
                 info["last_act"],  # NUM_JOINTS
                 info["last_last_act"],  # NUM_JOINTS
                 info["last_last_last_act"],  # NUM_JOINTS
-                phase, # 2
+                phase, # 4
             ]
         )
 
