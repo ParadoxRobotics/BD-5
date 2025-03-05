@@ -218,7 +218,7 @@ class Joystick(BD5_base.BD5Env):
 
         data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
 
-        # Phase, freq=U(1.0, 1.5)
+        # Phase, freq=U(1.25, 1.5)
         rng, key = jax.random.split(rng)
         gait_freq = jax.random.uniform(key, (1,), minval=1.25, maxval=1.5)
         phase_dt = 2 * jp.pi * self.dt * gait_freq
@@ -415,7 +415,7 @@ class Joystick(BD5_base.BD5Env):
         sin = jp.sin(info["phase"])
         phase = jp.concatenate([cos, sin])
 
-        # Real robot state observation
+        # Real robot state observation n=58
         state = jp.hstack(
             [
                 noisy_gravity,  # 3
@@ -425,7 +425,7 @@ class Joystick(BD5_base.BD5Env):
                 info["last_act"],  # NUM_JOINTS
                 info["last_last_act"],  # NUM_JOINTS
                 info["last_last_last_act"],  # NUM_JOINTS
-                phase,
+                phase, # 2
             ]
         )
 
