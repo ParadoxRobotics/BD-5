@@ -76,7 +76,7 @@ class BaseRunner(ABC):
         self.logger = logger
         self.args = args
         self.env_name = args.env
-        self.base_body = "Z-BOT2_MASTER-BODY-SKELETON"
+        self.base_body = "root"
 
         # Initialize environment
         runner_config = self.setup_environment(args.task)
