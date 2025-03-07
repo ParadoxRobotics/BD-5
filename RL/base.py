@@ -23,10 +23,11 @@ from etils import epath
 import jax
 import jax.numpy as jp
 from ml_collections import config_dict
+
 import mujoco
 from mujoco import mjx
-
 from mujoco_playground._src import mjx_env
+
 import constants
 
 
@@ -41,6 +42,7 @@ def get_assets() -> Dict[str, bytes]:
 
 
 class BD5Env(mjx_env.MjxEnv):
+    """Base class for BD-5 environments."""
     def __init__(
         self,
         xml_path: str,

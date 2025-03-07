@@ -19,7 +19,7 @@
 from etils import epath
 
 
-ROOT_PATH = epath.Path(__file__).parent
+ROOT_PATH = epath.Path(__file__).parent.resolve()
 FEET_ONLY_FLAT_TERRAIN_XML = ROOT_PATH / "xmls" / "scene_flat.xml"
 FEET_ONLY_ROUGH_TERRAIN_XML = ROOT_PATH / "xmls" / "scene_rough.xml"
 

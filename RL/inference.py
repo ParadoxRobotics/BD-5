@@ -2,8 +2,6 @@ import mujoco
 import pickle
 import numpy as np
 
-import jax.numpy as jp
-
 import mujoco.viewer
 import time
 import argparse
@@ -75,18 +73,27 @@ data.qpos[3 : 3 + 4] = [1.0, 0.0, 0.0, 0.0]
 
 # Init gait phase and frequency
 gait_freq = 1.25
-phase_dt = 2 * jp.pi * DT * gait_freq
-phase_init = jp.array([0, jp.pi])
+phase_dt = 2 * np.pi * DT * gait_freq
+phase_init = np.array([0, np.pi])
 phase_tp1 = phase_init + phase_dt
-phase = jp.fmod(phase_tp1 + jp.pi, 2 * jp.pi) - jp.pi
-cos = jp.cos(phase)
-sin = jp.sin(phase)
-phase = jp.concatenate([cos, sin])
+phase = np.fmod(phase_tp1 + np.pi, 2 * np.pi) - np.pi
+cos = np.cos(phase)
+sin = np.sin(phase)
+phase = np.concatenate([cos, sin])
 
 data.qpos[7:] = init_pos
 data.ctrl[:] = init_pos
 
+# IMU fusion
 imu_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "imu")
+# Gyroscope
+gyro_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "gyro")
+gyro_addr = model.sensor_adr[gyro_id]
+gyro_dim = 3
+# Accelerometer
+accelerometer_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR, "accelerometer")
+accelerometer_addr = model.sensor_adr[accelerometer_id]
+accelerometer_dim = 3
 
 def get_sensor(model, data, name, dimensions):
     i = model.sensor_name2id(name)
@@ -95,15 +102,24 @@ def get_sensor(model, data, name, dimensions):
 def get_gravity(data):
     return data.site_xmat[imu_site_id].reshape((3, 3)).T @ np.array([0, 0, -1])
 
-def get_obs(data, last_action, last_last_action, last_last_last_action, command, phase):
+def get_gyro(data):
+    return data.sensordata[gyro_addr : gyro_addr + gyro_dim]
 
-    # get gravity, joint pos and vel
+def get_accelerometer(data):
+    return data.sensordata[accelerometer_addr : accelerometer_addr+ accelerometer_dim]
+
+def get_obs(data, last_action, last_last_action, last_last_last_action, command, phase):
+    # get gyro, accelerometer, gravity, joint pos and vel
+    gyro = get_gyro(data)
+    accelerometer = get_accelerometer(data)
     gravity = get_gravity(data)
     joint_angles = data.qpos[7:]
     joint_vel = data.qvel[6:]
-
+    # observation vector 
     obs = np.concatenate(
         [
+            gyro,
+            accelerometer,
             gravity,
             command,
             joint_angles - init_pos,
@@ -114,13 +130,10 @@ def get_obs(data, last_action, last_last_action, last_last_last_action, command,
             phase,
         ]
     )
-
     return obs
-
 
 def key_callback(keycode):
     pass
-
 
 def handle_keyboard():
     global commands
@@ -145,7 +158,6 @@ def handle_keyboard():
     commands[1] = lin_vel_y
     commands[2] = ang_vel
     print(commands)
-
     pygame.event.pump()  # process event queue
 
 

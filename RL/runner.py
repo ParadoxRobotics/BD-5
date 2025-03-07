@@ -1,55 +1,54 @@
-"""Runs training and evaluation loop for the Z-Bot."""
+"""Runs training and evaluation loop for BD-5"""
 
 import argparse
-import logging
 
-import colorlogging
-
-import randomize as BD5_randomize
-from common.runner import BaseRunner, RunnerConfig
-import joystick as zbot_joystick, constants
-
-logger = logging.getLogger(__name__)
+from common import randomize
+from common.runner import BaseRunner
+import joystick
 
 
-class ZBotRunner(BaseRunner):
-    @classmethod
-    def setup_environment(cls, task: str) -> RunnerConfig:
-        env_config = zbot_joystick.default_config()
-        env = zbot_joystick.Joystick(task=task)
-        eval_env = zbot_joystick.Joystick(task=task)
-        randomizer = BD5_randomize.domain_randomize
-        return RunnerConfig(env_config, env, eval_env, randomizer)
+class BD5Runner(BaseRunner):
+    def __init__(self, args):
+        super().__init__(args)
+        available_envs = {
+            "joystick": (joystick, joystick.Joystick),
+        }
+        if args.env not in available_envs:
+            raise ValueError(f"Unknown env {args.env}")
 
-    @classmethod
-    def get_root_body(cls) -> str:
-        return constants.ROOT_BODY
+        self.env_file = available_envs[args.env]
+
+        self.env_config = self.env_file[0].default_config()
+        self.env = self.env_file[1](task=args.task)
+        self.eval_env = self.env_file[1](task=args.task)
+        self.randomizer = randomize.domain_randomize
+        self.action_size = self.env.action_size
+        self.obs_size = int(
+            self.env.observation_size["state"][0]
+        )  # 0: state 1: privileged_state
+        print(f"Observation size: {self.obs_size}")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="BD5 Runner Script")
-    parser.add_argument("--env", type=str, default="ZbotJoystickFlatTerrain", help="Environment to run")
+    parser = argparse.ArgumentParser(description="BD-5 Runner Script")
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default="checkpoints",
+        help="Where to save the checkpoints",
+    )
+    # parser.add_argument("--num_timesteps", type=int, default=300000000)
+    parser.add_argument("--num_timesteps", type=int, default=150000000)
+    parser.add_argument("--env", type=str, default="joystick", help="env")
     parser.add_argument("--task", type=str, default="flat_terrain", help="Task to run")
-    parser.add_argument("--debug", action="store_true", help="Run in debug mode with minimal parameters")
-    parser.add_argument("--save-model", action="store_true", help="Save model after training")
-    parser.add_argument("--load-model", action="store_true", help="Load existing model instead of training")
-    parser.add_argument("--seed", type=int, default=1, help="Random seed")
-    parser.add_argument("--num-episodes", type=int, default=2, help="Number of evaluation episodes")
-    parser.add_argument("--episode-length", type=int, default=3000, help="Length of each episode")
-    parser.add_argument("--x-vel", type=float, default=1.0, help="X velocity command")
-    parser.add_argument("--y-vel", type=float, default=0.0, help="Y velocity command")
-    parser.add_argument("--yaw-vel", type=float, default=0.0, help="Yaw velocity command")
+    # parser.add_argument(
+    #     "--debug", action="store_true", help="Run in debug mode with minimal parameters"
+    # )
     args = parser.parse_args()
 
-    colorlogging.configure()
-    runner = ZBotRunner(args, logger)
+    runner = BD5Runner(args)
 
-    if args.load_model:
-        runner.load_model()
-    else:
-        runner.train()
-
-    runner.evaluate()
+    runner.train()
 
 
 if __name__ == "__main__":

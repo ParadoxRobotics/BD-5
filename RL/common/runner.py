@@ -94,6 +94,8 @@ class BaseRunner(ABC):
             del self.ppo_training_params["network_factory"]
         else:
             network_factory = ppo_networks.make_ppo_networks
+        self.ppo_training_params["num_timesteps"] = self.num_timesteps
+        print(f"PPO params: {self.ppo_training_params}")
 
         train_fn = functools.partial(
             ppo.train,

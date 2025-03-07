@@ -30,7 +30,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--onnx_model_path", type=str, required=True)
     args = parser.parse_args()
 
-    obs_size = 60
+    obs_size = 66
 
     oi = OnnxInfer(args.onnx_model_path, awd=True)
     times = []
