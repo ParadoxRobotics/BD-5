@@ -536,17 +536,13 @@ class Joystick(BD5_base.BD5Env):
 
     # Tracking rewards.
     def _reward_tracking_lin_vel(
+        self,
         commands: jax.Array,
         local_vel: jax.Array,
         tracking_sigma: float,
     ) -> jax.Array:
-        # lin_vel_error = jp.sum(jp.square(commands[:2] - local_vel[:2]))
-        # return jp.nan_to_num(jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma))
-        y_tol = 0.1
-        error_x = jp.square(commands[0] - local_vel[0])
-        error_y = jp.clip(jp.abs(local_vel[1] - commands[1]) - y_tol, 0.0, None)
-        lin_vel_error = error_x + jp.square(error_y)
-        return jp.nan_to_num(jp.exp(-lin_vel_error / tracking_sigma))
+        lin_vel_error = jp.sum(jp.square(commands[:2] - local_vel[:2]))
+        return jp.nan_to_num(jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma))
 
     def _reward_tracking_ang_vel(
         self,
