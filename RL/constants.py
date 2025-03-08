@@ -31,17 +31,21 @@ def task_to_xml(task_name: str) -> epath.Path:
     }[task_name]
 
 
+FEET_LINVEL = [
+    "left_foot_global_linvel",
+    "left_foot_global_linvel",]
+
 FEET_SITES = [
     "left_foot_site",
     "right_foot_site",
 ]
 
 LEFT_FEET_GEOMS = [
-    "FOOT_LEFT",
+    "collision_foot_left",
 ]
 
 RIGHT_FEET_GEOMS = [
-    "FOOT_RIGHT",
+    "collision_foot_right",
 ]
 
 FEET_GEOMS = LEFT_FEET_GEOMS + RIGHT_FEET_GEOMS

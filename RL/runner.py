@@ -2,7 +2,7 @@
 
 import argparse
 
-from common import randomize
+import randomize
 from common.runner import BaseRunner
 import joystick
 
@@ -34,7 +34,7 @@ def main() -> None:
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="checkpoints",
+        default="/home/master/Bureau/BD-5/RL/networks",
         help="Where to save the checkpoints",
     )
     # parser.add_argument("--num_timesteps", type=int, default=300000000)

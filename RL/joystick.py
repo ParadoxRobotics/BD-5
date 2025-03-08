@@ -38,7 +38,7 @@ def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
       ctrl_dt=0.02,
       sim_dt=0.002,
-      episode_length=500,
+      episode_length=1000,
       action_repeat=1,
       action_scale=0.5,
       dof_vel_scale=1, # 0.05
@@ -55,9 +55,10 @@ def default_config() -> config_dict.ConfigDict:
               knee_pos=0.05,
               ankle_pos=0.08,
               joint_vel=2.5, # 1.5
-              gravity=0.05, # 0.1
+              gravity=0.1, # 0.1
               linvel=0.1,
-              gyro=0.2,
+              gyro=0.1,
+              accelerometer=0.01,
           ),
       ),
       reward_config=config_dict.create(
@@ -82,7 +83,7 @@ def default_config() -> config_dict.ConfigDict:
               feet_phase=1.0,
               # Other rewards.
               stand_still=-1.0, # penalize when command = 0
-              alive=0.25,
+              alive=20.0,
               termination=-100.0,
               # Pose related rewards.
               joint_deviation_knee=-0.1,
@@ -99,9 +100,9 @@ def default_config() -> config_dict.ConfigDict:
           interval_range=[5.0, 10.0],
           magnitude_range=[0.1, 2.0],
       ),
-        lin_vel_x=[-0.1, 0.15], # [-1.0, 1.0]
-        lin_vel_y=[-0.2, 0.2], # [-1.0, 1.0]
-        ang_vel_yaw=[-0.5, 0.5],  # [-1.0, 1.0]
+        lin_vel_x=[-1.0, 1.0], # [-1.0, 1.0]
+        lin_vel_y=[-1.0, -1.0], # [-1.0, 1.0]
+        ang_vel_yaw=[-1.0, -1.0],  # [-1.0, 1.0]
   )
 
 class Joystick(BD5_base.BD5Env):
@@ -165,6 +166,7 @@ class Joystick(BD5_base.BD5Env):
 
         self._nb_joints = self._mj_model.njnt # number of joints
         self._nb_actuators = self._mj_model.nu # number of actuators
+        print("Number of Joints and Actuators =", self._nb_joints, self._nb_actuators)
 
         self._torso_body_id = self._mj_model.body(consts.ROOT_BODY).id
         self._torso_mass = self._mj_model.body_subtreemass[self._torso_body_id]
@@ -177,15 +179,12 @@ class Joystick(BD5_base.BD5Env):
         self._feet_geom_id = np.array([self._mj_model.geom(name).id for name in consts.FEET_GEOMS])
 
         foot_linvel_sensor_adr = []
-        for site in consts.FEET_SITES:
-            sensor_id = self._mj_model.sensor(f"{site}_global_linvel").id
+        for site in consts.FEET_LINVEL:
+            sensor_id = self._mj_model.sensor(f"{site}").id
             sensor_adr = self._mj_model.sensor_adr[sensor_id]
             sensor_dim = self._mj_model.sensor_dim[sensor_id]
             foot_linvel_sensor_adr.append(list(range(sensor_adr, sensor_adr + sensor_dim)))
         self._foot_linvel_sensor_adr = jp.array(foot_linvel_sensor_adr)
-
-        self._left_foot_box_geom_id = self._mj_model.geom("left_foot").id
-        self._right_foot_box_geom_id = self._mj_model.geom("right_foot").id
 
         # Joint noise scale
         qpos_noise_scale = np.zeros(self._nb_actuators)
@@ -277,8 +276,10 @@ class Joystick(BD5_base.BD5Env):
         metrics["swing_peak"] = jp.zeros(())
 
         contact = jp.array([geoms_colliding(data, geom_id, self._floor_geom_id) for geom_id in self._feet_geom_id])
+
         obs = self._get_obs(data, info, contact)
         reward, done = jp.zeros(2)
+
         return mjx_env.State(data, obs, reward, done, metrics, info)
 
     def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:

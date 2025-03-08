@@ -18,7 +18,7 @@ from mujoco_playground.config import locomotion_params
 from orbax import checkpoint as ocp
 import jax
 
-import export_onnx
+from common.onnx_exporter import export_onnx
 
 
 class BaseRunner(ABC):
@@ -39,6 +39,7 @@ class BaseRunner(ABC):
         self.writer = SummaryWriter(log_dir=self.output_dir)
         self.action_size = None
         self.obs_size = None
+        self.num_timesteps = args.num_timesteps
 
         # CACHE STUFF
         os.makedirs(".tmp", exist_ok=True)
