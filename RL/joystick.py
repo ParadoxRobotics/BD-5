@@ -535,7 +535,7 @@ class Joystick(BD5_base.BD5Env):
         }
 
     # Tracking rewards.
-    def reward_tracking_lin_vel(
+    def _reward_tracking_lin_vel(
         commands: jax.Array,
         local_vel: jax.Array,
         tracking_sigma: float,
@@ -570,7 +570,7 @@ class Joystick(BD5_base.BD5Env):
     def _cost_base_height(self, base_height: jax.Array) -> jax.Array:
         return jp.nan_to_num(jp.square(base_height - self._config.reward_config.base_height_target))
 
-    def reward_base_y_swing(
+    def _reward_base_y_swing(
         base_y_speed: jax.Array,
         freq: float,
         amplitude: float,
@@ -599,7 +599,7 @@ class Joystick(BD5_base.BD5Env):
         out_of_limits += jp.clip(qpos - self._soft_uppers, 0.0, None)
         return jp.nan_to_num(jp.sum(out_of_limits))
 
-    def cost_stand_still(
+    def _cost_stand_still(
         commands: jax.Array,
         qpos: jax.Array,
         qvel: jax.Array,
