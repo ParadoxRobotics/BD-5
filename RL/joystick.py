@@ -83,15 +83,15 @@ def default_config() -> config_dict.ConfigDict:
               feet_phase=1.0,
               # Other rewards.
               stand_still=-1.0, # penalize when command = 0
-              alive=20.0,
-              termination=-100.0,
+              alive=0.0,
+              termination=-1.0,
               # Pose related rewards.
               joint_deviation_knee=-0.1,
               joint_deviation_hip=-0.25,
               dof_pos_limits=-1.0,
               pose=-1.0,
           ),
-          tracking_sigma=0.25, # test it with 0.01
+          tracking_sigma=0.01, # test it with 0.01
           max_foot_height=0.06, # 0.1
           base_height_target=0.25, # 0.5
       ),
@@ -124,7 +124,6 @@ class Joystick(BD5_base.BD5Env):
     def _post_init(self) -> None:
         # Init default pose
         self._init_q = jp.array(self._mj_model.keyframe("init_pose").qpos)
-        self._default_pose = jp.array(self._mj_model.keyframe("init_pose").qpos[7:])
         self._default_pose = self._mj_model.keyframe("init_pose").ctrl
 
         # Get the range of the joints
@@ -147,6 +146,7 @@ class Joystick(BD5_base.BD5Env):
         knee_indices.append(self._mj_model.joint("right_knee").qposadr - 7)
         self._knee_indices = jp.array(knee_indices)
 
+
         # fmt: off
         self._weights = jp.array(
             [
@@ -168,8 +168,6 @@ class Joystick(BD5_base.BD5Env):
         self._nb_actuators = self._mj_model.nu # number of actuators
         print("Number of Joints and Actuators =", self._nb_joints, self._nb_actuators)
 
-        self._torso_body_id = self._mj_model.body(consts.ROOT_BODY).id
-        self._torso_mass = self._mj_model.body_subtreemass[self._torso_body_id]
         self._site_id = self._mj_model.site("imu").id
 
         self._feet_site_id = np.array([self._mj_model.site(name).id for name in consts.FEET_SITES])
@@ -195,6 +193,7 @@ class Joystick(BD5_base.BD5Env):
         qpos_noise_scale[knee_ids] = self._config.noise_config.scales.knee_pos
         qpos_noise_scale[ankle_ids] = self._config.noise_config.scales.ankle_pos
         self._qpos_noise_scale = jp.array(qpos_noise_scale)
+        exit()
 
     def reset(self, rng: jax.Array) -> mjx_env.State:
         # Init position / velocity state 
@@ -267,12 +266,8 @@ class Joystick(BD5_base.BD5Env):
         }
 
         metrics = {}
-        for k, v in self._config.reward_config.scales.items():
-            if v != 0:
-                if v > 0:
-                    metrics[f"reward/{k}"] = jp.zeros(())
-                else:
-                    metrics[f"cost/{k}"] = jp.zeros(())
+        for k in self._config.reward_config.scales.keys():
+            metrics[f"reward/{k}"] = jp.zeros(())
         metrics["swing_peak"] = jp.zeros(())
 
         contact = jp.array([geoms_colliding(data, geom_id, self._floor_geom_id) for geom_id in self._feet_geom_id])
@@ -366,7 +361,6 @@ class Joystick(BD5_base.BD5Env):
         for k, v in rewards.items():
             state.metrics[f"reward/{k}"] = v
         state.metrics["swing_peak"] = jp.mean(state.info["swing_peak"])
-
         done = done.astype(reward.dtype)
         state = state.replace(data=data, obs=obs, reward=reward, done=done)
         return state
@@ -513,8 +507,8 @@ class Joystick(BD5_base.BD5Env):
             "action_rate": self._cost_action_rate(action, info["last_act"], info["last_last_act"]),
             "energy": self._cost_energy(data.qvel[6:], data.actuator_force),
             # Feet related rewards.
-            "feet_slip": self._cost_feet_slip(data, contact, info),
             "feet_clearance": self._cost_feet_clearance(data, info),
+            "feet_slip": self._cost_feet_slip(data, contact, info),
             "feet_height": self._cost_feet_height(info["swing_peak"], first_contact, info),
             "feet_air_time": self._reward_feet_air_time(info["feet_air_time"], first_contact, info["command"]),
             "feet_phase": self._reward_feet_phase(
@@ -534,15 +528,16 @@ class Joystick(BD5_base.BD5Env):
             "pose": self._cost_pose(data.qpos[7:]),
         }
 
-    # Tracking rewards.
     def _reward_tracking_lin_vel(
         self,
         commands: jax.Array,
         local_vel: jax.Array,
-        tracking_sigma: float,
     ) -> jax.Array:
         lin_vel_error = jp.sum(jp.square(commands[:2] - local_vel[:2]))
-        return jp.nan_to_num(jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma))
+        tracking_sigma = self._config.reward_config.tracking_sigma
+        tracking_sigma = jp.where(tracking_sigma == 0, 1e-6, tracking_sigma)  # Avoid division by zero
+        reward = jp.exp(-lin_vel_error / tracking_sigma)
+        return jp.nan_to_num(reward)
 
     def _reward_tracking_ang_vel(
         self,
@@ -550,10 +545,12 @@ class Joystick(BD5_base.BD5Env):
         ang_vel: jax.Array,
     ) -> jax.Array:
         ang_vel_error = jp.square(commands[2] - ang_vel[2])
-        return jp.nan_to_num(jp.exp(-ang_vel_error / self._config.reward_config.tracking_sigma))
+        tracking_sigma = self._config.reward_config.tracking_sigma
+        tracking_sigma = jp.where(tracking_sigma == 0, 1e-6, tracking_sigma)  # Avoid division by zero
+        reward = jp.exp(-ang_vel_error / tracking_sigma)
+        return jp.nan_to_num(reward)
 
     # Base-related rewards.
-
     def _cost_lin_vel_z(self, global_linvel: jax.Array) -> jax.Array:
         return jp.nan_to_num(jp.square(global_linvel[2]))
 
@@ -567,6 +564,7 @@ class Joystick(BD5_base.BD5Env):
         return jp.nan_to_num(jp.square(base_height - self._config.reward_config.base_height_target))
 
     def _reward_base_y_swing(
+        self,
         base_y_speed: jax.Array,
         freq: float,
         amplitude: float,
@@ -596,15 +594,12 @@ class Joystick(BD5_base.BD5Env):
         return jp.nan_to_num(jp.sum(out_of_limits))
 
     def _cost_stand_still(
-        commands: jax.Array,
-        qpos: jax.Array,
-        qvel: jax.Array,
-        default_pose: jax.Array,
+        self, commands: jax.Array, qpos: jax.Array
     ) -> jax.Array:
         cmd_norm = jp.linalg.norm(commands)
-        pose_cost = jp.sum(jp.abs(qpos - default_pose))
-        vel_cost = jp.sum(jp.abs(qvel))
-        return jp.nan_to_num(pose_cost + vel_cost) * (cmd_norm < 0.01)
+        cost = jp.sum(jp.abs(qpos - self._default_pose))
+        cost *= cmd_norm < 0.01
+        return cost
 
     def _cost_termination(self, done: jax.Array) -> jax.Array:
         return done
@@ -639,7 +634,7 @@ class Joystick(BD5_base.BD5Env):
         foot_pos = data.site_xpos[self._feet_site_id]
         foot_z = foot_pos[..., -1]
         delta = jp.abs(foot_z - self._config.reward_config.max_foot_height)
-        return jp.nan_to_num(jp.sum(delta * vel_norm))
+        return jp.sum(delta * vel_norm)
 
     def _cost_feet_height(
         self,
@@ -656,14 +651,14 @@ class Joystick(BD5_base.BD5Env):
         air_time: jax.Array,
         first_contact: jax.Array,
         commands: jax.Array,
-        threshold_min: float = 0.2,
+        threshold_min: float = 0.1,
         threshold_max: float = 0.5,
     ) -> jax.Array:
         cmd_norm = jp.linalg.norm(commands)
         air_time = (air_time - threshold_min) * first_contact
         air_time = jp.clip(air_time, max=threshold_max - threshold_min)
         reward = jp.sum(air_time)
-        reward *= cmd_norm > 0.1  # No reward for zero commands.
+        reward *= cmd_norm > 0.01  # No reward for zero commands.
         return jp.nan_to_num(reward)
 
     def _reward_feet_phase(
@@ -680,14 +675,6 @@ class Joystick(BD5_base.BD5Env):
         rz = gait.get_rz(phase, swing_height=foot_height)
         error = jp.sum(jp.square(foot_z - rz))
         reward = jp.exp(-error / 0.01)
-        body_linvel = self.get_global_linvel(data)[:2]
-        body_angvel = self.get_global_angvel(data)[2]
-        linvel_mask = jp.logical_or(
-            jp.linalg.norm(body_linvel) > 0.1,
-            jp.abs(body_angvel) > 0.1,
-        )
-        mask = jp.logical_or(linvel_mask, jp.linalg.norm(commands) > 0.01)
-        reward *= mask
         return jp.nan_to_num(reward)
 
     def sample_command(self, rng: jax.Array) -> jax.Array:

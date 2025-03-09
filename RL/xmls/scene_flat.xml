@@ -1,5 +1,5 @@
 <mujoco model="BD-5 flat scene">
-  <include file="BD-5_V2.xml"/>
+  <include file="BD-5_V3.xml"/>
 
   <statistic center="0 0 0.1" extent="0.8" meansize="0.04"/>
 
