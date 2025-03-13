@@ -79,12 +79,12 @@ JOINTS_ORDER = [
     "right_ankle",
 ]
 
-ROOT_BODY = "ROOT"
+ROOT_BODY = "base_body"
 
 # Sensors
+GYRO_SENSOR = "gyro"
+ACCELEROMETER_SENSOR = "accelerometer"
 GRAVITY_SENSOR = "upvector"
 GLOBAL_LINVEL_SENSOR = "global_linvel"
 GLOBAL_ANGVEL_SENSOR = "global_angvel"
 LOCAL_LINVEL_SENSOR = "local_linvel"
-ACCELEROMETER_SENSOR = "accelerometer"
-GYRO_SENSOR = "gyro"
