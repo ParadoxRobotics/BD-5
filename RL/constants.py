@@ -79,7 +79,7 @@ JOINTS_ORDER = [
     "right_ankle",
 ]
 
-ROOT_BODY = "root"
+ROOT_BODY = "ROOT"
 
 # Sensors
 GRAVITY_SENSOR = "upvector"

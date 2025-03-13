@@ -167,6 +167,8 @@ class Joystick(BD5_base.BD5Env):
         self._nb_joints = self._mj_model.njnt # number of joints
         self._nb_actuators = self._mj_model.nu # number of actuators
         print("Number of Joints and Actuators =", self._nb_joints, self._nb_actuators)
+        print(self._mj_model.body_subtreemass[self._mj_model.body(consts.ROOT_BODY).id])
+        exit()
 
         self._site_id = self._mj_model.site("imu").id
 

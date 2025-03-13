@@ -34,8 +34,8 @@
   </asset>
 
   <worldbody>
-    <body name="root" pos="0 0 0.3170777382037414" quat="1 0 0 0">
-      <freejoint name="root" />
+    <body name="body" pos="0 0 0.3170777382037414" quat="1 0 0 0">
+      <freejoint name="body" />
       <site name="imu" size="0.01" pos="-0.00121 0.00083 0.05123" />
       <camera name="front" mode="trackcom" pos="0 -3.0 0.8170777382037414" xyaxes="1 0 0 0 0 1" />
       <camera name="track" mode="trackcom" pos="0 -3.0 0.8170777382037414" xyaxes="1 0 0 0 0 1" />
