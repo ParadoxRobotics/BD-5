@@ -124,7 +124,10 @@ class Joystick(BD5_base.BD5Env):
     def _post_init(self) -> None:
         # Init default pose
         self._init_q = jp.array(self._mj_model.keyframe("init_pose").qpos)
-        self._default_pose = jp.array(self._mj_model.keyframe("init_pose").qpos[7:])
+        self._default_pose = self._mj_model.keyframe("init_pose").ctrl
+
+        print(self._default_pose)
+        exit()
 
         # Get the range of the joints
         # Note: First joint is freejoint.
