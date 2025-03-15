@@ -169,6 +169,6 @@ def export_onnx(
 
     # Onnx -> see Antoine Pirrone's code
     model_proto, _ = tf2onnx.convert.from_keras(
-        tf_policy_network, input_signature=spec, opset=11, output_path="ONNX.onnx"
+        tf_policy_network, input_signature=spec, opset=11, output_path="CONTROLLER.onnx"
     )
     return
