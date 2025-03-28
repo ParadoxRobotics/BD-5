@@ -76,6 +76,7 @@ class RLWalk:
 
         # Init joystick
         self.last_command = [0.0, 0.0, 0.0]
+        self.KILL
 
         # Init Servo Controller
         portHandler = PortHandler(DXL_port)
@@ -101,12 +102,17 @@ class RLWalk:
             user_pitch_bias=self.pitch_bias,
         )
 
-    def init_robot(self):
+    def start_robot(self):
         # enable torque
         self.servo.enable_torque()
         time.sleep(2)
         # set default angles
         self.servo.set_position(self._default_angles_full)
+        time.sleep(2)
+    
+    def stop_robot(self):
+        # disable torque
+        self.servo.disable_torque()
         time.sleep(2)
 
     def get_obs(self):
@@ -120,9 +126,6 @@ class RLWalk:
         # get joint angles delta and velocities
         joint_angles = current_qpos - self._default_angles_leg
         joint_velocities = current_qvel
-        # TODO : WTF is that !!!!!!!
-        joint_angles[:2] *= 0.0
-        joint_velocities[:2] *= 0.0
         # adjust phase
         ph = self._phase if np.linalg.norm(command) >= 0.01 else np.ones(2) * np.pi
         phase = np.concatenate([np.cos(ph), np.sin(ph)])
@@ -141,5 +144,6 @@ class RLWalk:
         ])
         return obs.astype(np.float32)
     
-    def control_loop(self):
+    def run(self):
         i = 0
+
