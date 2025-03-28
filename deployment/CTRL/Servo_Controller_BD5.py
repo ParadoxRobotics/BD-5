@@ -66,9 +66,6 @@ class ServoControllerBD5():
             "head_pitch": 1,
         }
         self.head_joint_list = list(self.head_joints.values())
-
-        # Nominal startup position 
-        self.init_position = []
         
         # Value limit XM430-W350-T and XC430-W150-T
         self.MAX_POS = 4096
@@ -283,7 +280,7 @@ class ServoControllerBD5():
     def get_velocity(self):
         # read raw angular velocity
         velocities, success = self.syncRead(self.groupSyncRead_vel, self.joint_list, self.ADDR_PRESENT_VELOCITY, self.LEN_PRESENT_VELOCITY)
-        # convert to rpm or rad/s
+        # convert to rad/s
         velocities = self.dxl2velocity(value=velocities)
         return velocities, success
     
@@ -335,6 +332,11 @@ if __name__=='__main__':
     else:
         portHandler.closePort()
         raise Exception("Error in servos ID or state !")
+    
+    portHandler.closePort()
+    print("Port closed !")
+    exit()
+
     time.sleep(2)
     # enable torque
     BDX.enable_torque()
@@ -354,5 +356,3 @@ if __name__=='__main__':
     # disable torque and close COM
     BDX.disable_torque()
     time.sleep(2)
-    portHandler.closePort()
-    print("Port closed !")
