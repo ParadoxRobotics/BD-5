@@ -7,6 +7,7 @@ from dynamixel_sdk import *
 from CTRL.Servo_Controller_BD5 import ServoControllerBD5
 from CTRL.IMU import IMU
 from CTRL.ONNX_infer import OnnxInfer
+from CTRL.Gamepad import Gamepad
 
 joints_order = [
     "left_hip_yaw",
@@ -54,6 +55,7 @@ class RLWalk:
                                     0.82498,
                                     1.64996,
                                     0.82498]
+        # TODO : add default head position 
         self._default_angles_head = [0.0, 0.0]
         self._default_angles_full = self._default_angles_leg + self._default_angles_head
 
@@ -75,8 +77,9 @@ class RLWalk:
         self._phase_dt = 2 * np.pi * self._gait_freq * self._ctrl_dt 
 
         # Init joystick
+        self.joystick = Gamepad(command_freq=control_freq, vel_range_x=vel_range_x, vel_range_y=vel_range_y, vel_range_rot=vel_range_rot, deadzone=0.04)
         self.last_command = [0.0, 0.0, 0.0]
-        self.KILL
+        self.ENABLE = False
 
         # Init Servo Controller
         portHandler = PortHandler(DXL_port)
@@ -117,24 +120,24 @@ class RLWalk:
 
     def get_obs(self):
         # get IMU data  
-        data = self.imu.get_data()
+        imu_data = self.imu.get_data()
         # get Dynamixel data
         current_qpos, success = self.servo.get_position()
         current_qvel, success = self.servo.get_velocity()
-        # get command
-        command = None
+        current_qpos = np.array(current_qpos)
+        current_qvel = np.array(current_qvel)
         # get joint angles delta and velocities
         joint_angles = current_qpos - self._default_angles_leg
         joint_velocities = current_qvel
         # adjust phase
-        ph = self._phase if np.linalg.norm(command) >= 0.01 else np.ones(2) * np.pi
+        ph = self._phase if np.linalg.norm(self.last_command) >= 0.01 else np.ones(2) * np.pi
         phase = np.concatenate([np.cos(ph), np.sin(ph)])
         # concatenate all
         obs = np.hstack([
-            data["gyro"],
-            data["accelero"],
-            #data["orientation"],
-            command,
+            imu_data["gyro"],
+            imu_data["acceleration"],
+            # imu_data["orientation"],
+            self.last_command,
             joint_angles,
             joint_velocities,
             self._last_action,
@@ -146,4 +149,58 @@ class RLWalk:
     
     def run(self):
         i = 0
+        try:
+            print("Starting")
+            start_t = time.time()
+            while True:
+                t = time.time()
+                # get command from joystick
+                self.last_command, head_tilt, Akey, Xkey, Bkey, Ykey = self.joystick.get_last_command()
+                # Activate the robot
+                if Akey == True:
+                    self.ENABLE = True
+                    self.start_robot()
+                # Kill-switch
+                if Xkey == True:
+                    self.ENABLE = False
+                    self.stop_robot()
+                    break
+                # Pause inference/action process 
+                if Bkey == True:
+                    time.sleep(0.1)
+                    continue
+                
+                if self.ENABLE == True:
+                    # get observation 
+                    obs = self.get_obs()
+                    onnx_input = {"obs": obs.reshape(1, -1)}
+                    # Policy inference 
+                    onnx_pred = self.policy(onnx_input)
+                    # update action memory
+                    self._last_last_last_action = self._last_last_action.copy()
+                    self._last_last_action = self._last_action.copy()
+                    self._last_action = onnx_pred.copy()
+                    # update motor targets -> in real case self._ctrl_dt = self._n_substeps * self._sim_dt
+                    self.motor_targets = onnx_pred * self._action_scale + self._default_angles_leg
+                    self.motor_targets = np.clip(self.motor_targets, 
+                                                self.prev_motor_targets - self.max_motor_speed * (self._ctrl_dt),
+                                                self.prev_motor_targets + self.max_motor_speed * (self._ctrl_dt)
+                                                )
+                    self.prev_motor_targets = self.motor_targets.copy()
+                    # send motor target to servos # TODO : add head control
+                    target_position = list(self.motor_targets) + self._default_angles_head 
+                    self.servo.set_position(value=target_position)
+                    # time control 
+                    i+=1
+                    took = time.time() - t
+                    if (1 / self.control_freq - took) < 0:
+                        print(
+                            "Policy control budget exceeded by",
+                            np.around(took - 1 / self.control_freq, 3),
+                        )
+                    time.sleep(max(0, 1 / self.control_freq - took))
+                else:
+                    continue
 
+        except KeyboardInterrupt:
+            pass
