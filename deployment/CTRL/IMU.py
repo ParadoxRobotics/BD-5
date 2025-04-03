@@ -4,7 +4,7 @@ from adafruit_bno08x.i2c import BNO08X_I2C
 from adafruit_bno08x import (
     BNO_REPORT_ACCELEROMETER,
     BNO_REPORT_GYROSCOPE,
-    BNO_REPORT_ROTATION_VECTOR
+    BNO_REPORT_GRAVITY
 )
 
 import os
@@ -29,7 +29,7 @@ class IMU:
         # Enable Gyroscope, Accelerometer and Rotation Vector
         self.imu.enable_feature(BNO_REPORT_ACCELEROMETER)
         self.imu.enable_feature(BNO_REPORT_GYROSCOPE)
-        self.imu.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+        self.imu.enable_feature(BNO_REPORT_GRAVITY)
 
         self.pitch_bias = self.nominal_pitch_bias + self.user_pitch_bias
 
@@ -56,7 +56,7 @@ class IMU:
         self.last_imu_data = {
             "gyro": [0, 0, 0],
             "accelero": [0, 0, 0],
-            "orientation": [0, 0, 0 ,0],
+            "orientation": [0, 0, 0],
         }
         self.imu_queue = Queue(maxsize=1)
         Thread(target=self.imu_worker, daemon=True).start()
@@ -68,8 +68,8 @@ class IMU:
                 # get data 
                 gyro = np.array(self.imu.gyro).copy()
                 acceleration = np.array(self.imu.acceleration).copy()
-                orientation = np.array(self.imu.quaternion).copy()
-
+                orientation = np.array(self.imu.gravity).copy()
+                 
             except Exception as e:
                 print("[IMU]:", e)
                 continue
@@ -105,6 +105,6 @@ if __name__ == "__main__":
         data = imu.get_data()
         print("gyro", np.around(data["gyro"], 3))
         print("acceleration", np.around(data["acceleration"], 3))
-        print("orientation", np.around(data["orientation"], 4))
+        print("orientation", np.around(data["orientation"], 3))
         print("---")
         time.sleep(1 / 25)

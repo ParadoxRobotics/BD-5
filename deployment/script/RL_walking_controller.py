@@ -24,6 +24,28 @@ joints_order = [
     "head_pitch"
 ]
 
+class LowPassActionFilter:
+    def __init__(self, control_freq, cutoff_frequency=30.0):
+        self.last_action = 0
+        self.current_action = 0
+        self.control_freq = float(control_freq)
+        self.cutoff_frequency = float(cutoff_frequency)
+        self.alpha = self.compute_alpha()
+
+    def compute_alpha(self):
+        return (1.0 / self.cutoff_frequency) / (
+            1.0 / self.control_freq + 1.0 / self.cutoff_frequency
+        )
+
+    def push(self, action):
+        self.current_action = action
+
+    def get_filtered_action(self):
+        self.last_action = (
+            self.alpha * self.last_action + (1 - self.alpha) * self.current_action
+        )
+        return self.last_action
+
 class RLWalk:
     def __init__(
         self,
@@ -136,7 +158,7 @@ class RLWalk:
         obs = np.hstack([
             imu_data["gyro"],
             imu_data["acceleration"],
-            # imu_data["orientation"],
+            imu_data["orientation"],
             self.last_command,
             joint_angles,
             joint_velocities,
