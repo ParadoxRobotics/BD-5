@@ -30,42 +30,40 @@ class ServoControllerBD5():
             "head_pitch": 1,
         }
         self.joint_list = list(self.joints.values())
+
         # Joint limit in dxl value [min, max]
         self.joints_limit = {
-            "left_hip_yaw": [1790,2295],
+            "left_hip_yaw": [1800,2295],
             "left_hip_roll": [1795,3275],
-            "left_hip_pitch": [878,3188],
-            "left_knee": [495,2048],
-            "left_ankle": [818,3295],
-            "right_hip_yaw": [1790,2295],
-            "right_hip_roll": [812,2284],
-            "right_hip_pitch": [878,3188],
-            "right_knee": [495,2048],
-            "right_ankle": [818,3295],
+            "left_hip_pitch": [907,3188],
+            "left_knee": [496,2048],
+            "left_ankle": [816,3279],
+            "right_hip_yaw": [1800,2295],
+            "right_hip_roll": [822,2300],
+            "right_hip_pitch": [907,3188],
+            "right_knee": [496,2048],
+            "right_ankle": [816,3279],
             "neck_pitch": [1195,2680],
             "head_pitch": [1145,2925],
         }
         self.joints_limit_list = list(self.joints_limit.values())
-        # list of leg joints XM430-W350-T
-        self.leg_joints = {
-            "left_hip_yaw": 4,
-            "left_hip_roll": 6,
-            "left_hip_pitch": 8,
-            "left_knee": 10,
-            "left_ankle": 12,
-            "right_hip_yaw": 3,
-            "right_hip_roll": 5,
-            "right_hip_pitch": 7,
-            "right_knee": 9,
-            "right_ankle": 11,
-        }
-        self.leg_joint_list = list(self.leg_joints.values())
-        # list of head joints XC430-W150-T
-        self.head_joints = {
-            "neck_pitch": 2,
+
+        # Angular correction for each joint
+        self.joints_correction = {
+            "left_hip_yaw": 1,
+            "left_hip_roll": -1,
+            "left_hip_pitch": -1,
+            "left_knee": -1,
+            "left_ankle": 1,
+            "right_hip_yaw": 1,
+            "right_hip_roll": 1,
+            "right_hip_pitch": -1,
+            "right_knee": -1,
+            "right_ankle": 1,
+            "neck_pitch": -1,
             "head_pitch": 1,
         }
-        self.head_joint_list = list(self.head_joints.values())
+        self.joints_correction_list = list(self.joints_correction.values())
         
         # Value limit XM430-W350-T and XC430-W150-T
         self.MAX_POS = 4096
@@ -99,6 +97,10 @@ class ServoControllerBD5():
         self.groupSyncRead_vel = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_VELOCITY, self.LEN_PRESENT_VELOCITY)
         # get sync group for reading voltage
         self.groupSyncRead_volt = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_VOLTAGE, self.LEN_PRESENT_VOLTAGE)
+
+    # correct rotation 
+    def correctRotation(self, value):
+        [(val * cor) for val, cor in zip(value, self.joints_correction_list)]
 
     # Clamp min-max joint value (in dxl angular space)
     def dxlClamp(self, value):
@@ -269,6 +271,8 @@ class ServoControllerBD5():
     
     # Set goal position to all servos 
     def set_position(self, value):
+        # correct rotation
+        value = self.correctRotation(value)
         # convert value to dxl 
         ang_pos = self.position2dxl(value=value)
         # Clamp value 
@@ -282,14 +286,18 @@ class ServoControllerBD5():
         velocities, success = self.syncRead(self.groupSyncRead_vel, self.joint_list, self.ADDR_PRESENT_VELOCITY, self.LEN_PRESENT_VELOCITY)
         # convert to rad/s
         velocities = self.dxl2velocity(value=velocities)
+        # correct rotation
+        velocities = self.correctRotation(velocities)
         return velocities, success
     
     # Get current position 
     def get_position(self):
         # read raw position 
         positions, success = self.syncRead(self.groupSyncRead_pos, self.joint_list, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
-        # convert to degree or radian 
+        # convert to radian 
         positions = self.dxl2position(value=positions)
+        # correct rotation
+        positions = self.correctRotation(positions)
         return positions, success
 
     # Get voltage input 
