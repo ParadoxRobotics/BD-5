@@ -60,6 +60,7 @@ class RLWalk:
         vel_range_x: float = [-1.0, 1.0],
         vel_range_y: float = [-1.0, 1.0],
         vel_range_rot: float = [-1.0, 1.0],
+        enable_low_pass_filter: bool = False,
     ):
         # Init Model 
         self.model_path = onnx_model_path
@@ -101,7 +102,13 @@ class RLWalk:
         # Init joystick
         self.joystick = Gamepad(command_freq=control_freq, vel_range_x=vel_range_x, vel_range_y=vel_range_y, vel_range_rot=vel_range_rot, deadzone=0.04)
         self.last_command = [0.0, 0.0, 0.0]
+        self.last_head_tilt = 0.0
         self.ENABLE = False
+
+        # Init low pass filter
+        self.enable_low_pass_filter = enable_low_pass_filter
+        if self.enable_low_pass_filter:
+            self._low_pass_filter = LowPassActionFilter(control_freq=control_freq)
 
         # Init Servo Controller
         portHandler = PortHandler(DXL_port)

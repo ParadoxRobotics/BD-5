@@ -3,7 +3,7 @@ from dynamixel_sdk import *
 
 # Position based servo-controller 
 class ServoControllerBD5():
-    def __init__(self, portHandler, packetHandler):
+    def __init__(self, portHandler=None, packetHandler=None):
         # Constant
         self.PI = 3.14159265
         self.deg2rad = self.PI/180
@@ -15,7 +15,7 @@ class ServoControllerBD5():
         self.packetHandler = packetHandler
 
         # list of all joint IDs
-        self.joints = {
+        self.joints_ID = {
             "left_hip_yaw": 4,
             "left_hip_roll": 6,
             "left_hip_pitch": 8,
@@ -29,7 +29,7 @@ class ServoControllerBD5():
             "neck_pitch": 2,
             "head_pitch": 1,
         }
-        self.joint_list = list(self.joints.values())
+        self.joint_ID_list = list(self.joints_ID.values())
 
         # Joint limit in dxl value [min, max]
         self.joints_limit = {
@@ -75,6 +75,7 @@ class ServoControllerBD5():
         self.ADDR_POSITION_P_GAIN = 84
         self.ADDR_POSITION_I_GAIN = 82
         self.ADDR_POSITION_D_GAIN = 80
+        self.ADDR_PROFILE_VELOCITY = 112
         self.ADDR_GOAL_POSITION = 116
         self.ADDR_PRESENT_VOLTAGE = 144
         self.ADDR_PRESENT_POSITION = 132
@@ -85,6 +86,7 @@ class ServoControllerBD5():
         self.LEN_POSITION_P_GAIN = 2
         self.LEN_POSITION_I_GAIN = 2
         self.LEN_POSITION_D_GAIN = 2
+        self.LEN_PROFILE_VELOCITY = 4
         self.LEN_GOAL_POSITION = 4
         self.LEN_PRESENT_VOLTAGE = 2
         self.LEN_PRESENT_POSITION = 4
@@ -100,7 +102,7 @@ class ServoControllerBD5():
 
     # correct rotation 
     def correctRotation(self, value):
-        [(val * cor) for val, cor in zip(value, self.joints_correction_list)]
+        return [(val * cor) for val, cor in zip(value, self.joints_correction_list)]
 
     # Clamp min-max joint value (in dxl angular space)
     def dxlClamp(self, value):
@@ -151,7 +153,7 @@ class ServoControllerBD5():
 
     # Write to mutliple mem addr a value 
     def itemWriteMultiple(self, ids, address, data, length):
-        if isinstance(data, list) == False:
+        if not isinstance(data, list):
             for id in ids:
                 success = self.itemWrite(id, address, data, length)
                 if success != True:
@@ -221,7 +223,7 @@ class ServoControllerBD5():
         for id in ids:
             dxl_addparam_result = groupSyncRead.addParam(id)
             if dxl_addparam_result != True:
-                print("ID:%03d groupSyncRead addparam failed", id)
+                print("ID:%03d groupSyncRead addparam failed" % id)
                 return [], False
 
         dxl_comm_result = groupSyncRead.txRxPacket()
@@ -240,7 +242,7 @@ class ServoControllerBD5():
         return states, True
     
     def ping(self):
-        for id in self.joint_list:
+        for id in self.joint_ID_list:
             model_num, dxl_comm_result, dxl_error = self.packetHandler.ping(self.portHandler, id)
             success = self.checkError(dxl_comm_result, dxl_error)
             if success:
@@ -251,11 +253,11 @@ class ServoControllerBD5():
     
     # Enable torque 
     def enable_torque(self):
-        self.itemWriteMultiple(self.joint_list, self.ADDR_TORQUE_ENABLE, 1, self.LEN_TORQUE_ENABLE)
+        self.itemWriteMultiple(self.joint_ID_list, self.ADDR_TORQUE_ENABLE, 1, self.LEN_TORQUE_ENABLE)
 
     # Disable torque 
     def disable_torque(self):
-        self.itemWriteMultiple(self.joint_list, self.ADDR_TORQUE_ENABLE, 0, self.LEN_TORQUE_ENABLE)
+        self.itemWriteMultiple(self.joint_ID_list, self.ADDR_TORQUE_ENABLE, 0, self.LEN_TORQUE_ENABLE)
 
     # Set P gain
     def set_P_gain(self, ids, value):
@@ -278,12 +280,12 @@ class ServoControllerBD5():
         # Clamp value 
         ang_pos = self.dxlClamp(value=ang_pos)
         # send command
-        self.syncWrite(self.groupSyncWrite_pos, self.joint_list, ang_pos, self.LEN_GOAL_POSITION)
+        self.syncWrite(self.groupSyncWrite_pos, self.joint_ID_list, ang_pos, self.LEN_GOAL_POSITION)
 
     # Get current velocity
     def get_velocity(self):
         # read raw angular velocity
-        velocities, success = self.syncRead(self.groupSyncRead_vel, self.joint_list, self.ADDR_PRESENT_VELOCITY, self.LEN_PRESENT_VELOCITY)
+        velocities, success = self.syncRead(self.groupSyncRead_vel, self.joint_ID_list, self.ADDR_PRESENT_VELOCITY, self.LEN_PRESENT_VELOCITY)
         # convert to rad/s
         velocities = self.dxl2velocity(value=velocities)
         # correct rotation
@@ -293,7 +295,7 @@ class ServoControllerBD5():
     # Get current position 
     def get_position(self):
         # read raw position 
-        positions, success = self.syncRead(self.groupSyncRead_pos, self.joint_list, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
+        positions, success = self.syncRead(self.groupSyncRead_pos, self.joint_ID_list, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
         # convert to radian 
         positions = self.dxl2position(value=positions)
         # correct rotation
@@ -303,10 +305,9 @@ class ServoControllerBD5():
     # Get voltage input 
     def get_voltage(self, mean):
         # read raw voltage
-        voltage, success = self.syncRead(self.groupSyncRead_volt, self.joint_list, self.ADDR_PRESENT_VOLTAGE, self.LEN_PRESENT_VOLTAGE)     
+        voltage, success = self.syncRead(self.groupSyncRead_volt, self.joint_ID_list, self.ADDR_PRESENT_VOLTAGE, self.LEN_PRESENT_VOLTAGE)     
         # convert to volt
-        for i in range(len(self.joint_list)):
-            voltage[i] = voltage[i] * 0.1
+        voltage = [v * 0.1 for v in voltage]
         # return mean voltage for battery level
         if mean:
             return sum(voltage)/len(voltage), success
@@ -349,9 +350,6 @@ if __name__=='__main__':
     # enable torque
     BDX.enable_torque()
     time.sleep(2)
-    # got to the 0 pose
-    BDX.set_position(BDX.init_position)
-    time.sleep(2)
     # read position 
     pos, state = BDX.get_position()
     print("Position =", pos)
@@ -364,3 +362,4 @@ if __name__=='__main__':
     # disable torque and close COM
     BDX.disable_torque()
     time.sleep(2)
+
