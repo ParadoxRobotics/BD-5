@@ -317,7 +317,7 @@ class ServoControllerBD5():
 if __name__=='__main__':   
     import time 
     # param
-    port = "/dev/ttyDXL"
+    port = "/dev/ttyUSB0"
     baudrate = 1000000
     # connect to U2D2
     portHandler = PortHandler(port)
@@ -362,4 +362,5 @@ if __name__=='__main__':
     # disable torque and close COM
     BDX.disable_torque()
     time.sleep(2)
+    print("END test")
 
