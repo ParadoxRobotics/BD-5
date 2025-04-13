@@ -315,7 +315,7 @@ class ServoControllerBD5():
         # convert to volt
         voltage = [v * 0.1 for v in voltage]
         # return mean voltage for battery level
-        if mean:
+        if mean and len(voltage) > 0:
             return sum(voltage)/len(voltage), success
         else:
             return voltage, success
