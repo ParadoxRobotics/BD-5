@@ -79,7 +79,7 @@ class RLWalk:
                                     1.64996,
                                     0.82498]
         # TODO : add default head position 
-        self._default_angles_head = [0.0, 0.0]
+        self._default_angles_head = [0.5306, -0.5306]
         self._default_angles_full = self._default_angles_leg + self._default_angles_head
 
         self._last_action = np.zeros_like(self._default_angles_leg, dtype=np.float32)
