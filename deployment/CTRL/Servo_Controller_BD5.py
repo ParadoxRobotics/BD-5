@@ -348,23 +348,38 @@ if __name__=='__main__':
         portHandler.closePort()
         raise Exception("Error in servos ID or state !")
     
+    # set default angles
+    default_angles_leg = [0.0, 
+                          0.0, 
+                          0.82498, 
+                          1.64996,
+                          0.82498,
+                          0.0,
+                          0.0,
+                          0.82498,
+                          1.64996,
+                          0.82498]
+    default_angles_head = [0.5306, -0.5306]
+    default_angles_full = default_angles_leg + default_angles_head
+    zeros_position = [0.0] * len(default_angles_full)
+
     time.sleep(2)
     # enable torque
-    BDX.enable_torque()
+    #BDX.enable_torque()
     time.sleep(2)
-    # read position 
-    pos, state = BDX.get_position()
-    print("Position =", pos)
-    # read velocity 
-    vel, state = BDX.get_velocity()
-    print("Angular velocity =", vel)
-    # read input voltage 
-    volt, state = BDX.get_voltage(mean=True)
-    print("Input voltage =", volt)
-    # disable torque and close COM
-    BDX.disable_torque()
-    time.sleep(2)
-    print("END test")
 
+    for i in range(1000):
+        # read position 
+        pos, state = BDX.get_position()
+        print("Position =", pos)
+        # read velocity 
+        vel, state = BDX.get_velocity()
+        print("Angular velocity =", vel)
+        # read input voltage 
+        volt, state = BDX.get_voltage(mean=True)
+        print("Input voltage =", volt)
+
+    # disable torque and close COM
+    #BDX.disable_torque()
     portHandler.closePort()
     print("Port closed !")
