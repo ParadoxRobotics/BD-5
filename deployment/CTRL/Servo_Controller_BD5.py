@@ -381,6 +381,8 @@ if __name__=='__main__':
     volt, state = BDX.get_voltage(mean=True)
     print("Input voltage =", volt)
 
+    time.sleep(2)
+
     # disable torque and close COM
     BDX.disable_torque()
     portHandler.closePort()
