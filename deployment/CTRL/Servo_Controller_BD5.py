@@ -342,10 +342,6 @@ if __name__=='__main__':
         portHandler.closePort()
         raise Exception("Error in servos ID or state !")
     
-    portHandler.closePort()
-    print("Port closed !")
-
-    """
     time.sleep(2)
     # enable torque
     BDX.enable_torque()
@@ -363,4 +359,6 @@ if __name__=='__main__':
     BDX.disable_torque()
     time.sleep(2)
     print("END test")
-    """
+
+    portHandler.closePort()
+    print("Port closed !")
