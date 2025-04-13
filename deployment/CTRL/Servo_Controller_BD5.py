@@ -102,7 +102,13 @@ class ServoControllerBD5():
 
     # correct rotation 
     def correctRotation(self, value):
-        return [(val * cor) for val, cor in zip(value, self.joints_correction_list)]
+        corrected_value = []
+        for i in range(len(value)):
+            if value[i] != 0.0:
+                corrected_value.append(value[i] * self.joints_correction_list[i])
+            else:
+                corrected_value.append(value[i])
+        return corrected_value
 
     # Clamp min-max joint value (in dxl angular space)
     def dxlClamp(self, value):
