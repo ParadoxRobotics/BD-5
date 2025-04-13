@@ -16,18 +16,18 @@ class ServoControllerBD5():
 
         # list of all joint IDs
         self.joints_ID = {
-            "left_hip_yaw": 4,
-            "left_hip_roll": 6,
-            "left_hip_pitch": 8,
-            "left_knee": 10,
-            "left_ankle": 12,
-            "right_hip_yaw": 3,
-            "right_hip_roll": 5,
-            "right_hip_pitch": 7,
-            "right_knee": 9,
-            "right_ankle": 11,
-            "neck_pitch": 2,
-            "head_pitch": 1,
+            "left_hip_yaw": 4, # XM430-W350-T
+            "left_hip_roll": 6, # XM430-W350-T
+            "left_hip_pitch": 8, # XM430-W350-T
+            "left_knee": 10, # XM430-W350-T
+            "left_ankle": 12, # XM430-W350-T
+            "right_hip_yaw": 3, # XM430-W350-T
+            "right_hip_roll": 5, # XM430-W350-T
+            "right_hip_pitch": 7, # XM430-W350-T
+            "right_knee": 9, # XM430-W350-T
+            "right_ankle": 11, # XM430-W350-T
+            "neck_pitch": 2, # XC430-W150-T
+            "head_pitch": 1, # XC430-W150-T
         }
         self.joint_ID_list = list(self.joints_ID.values())
 
@@ -238,8 +238,12 @@ class ServoControllerBD5():
             return [], False
 
         states = []
-        for id in ids:
-            state = groupSyncRead.getData(id, address, length)
+        for id in ids:                    
+            if groupSyncRead.isAvailable(id, address, length):
+                state = groupSyncRead.getData(id, address, length)
+            else:
+                print(f"[Warning] ID {id} has no available data (no status packet).")
+                state = None
             if length == 2 and state > 0x7fff:
                 state = state - 65536
             elif length == 4 and state > 0x7fffffff:
@@ -381,7 +385,7 @@ if __name__=='__main__':
     volt, state = BDX.get_voltage(mean=True)
     print("Input voltage =", volt)
 
-    time.sleep(2)
+    time.sleep(10)
 
     # disable torque and close COM
     BDX.disable_torque()
