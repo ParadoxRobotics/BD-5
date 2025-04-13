@@ -365,21 +365,23 @@ if __name__=='__main__':
 
     time.sleep(2)
     # enable torque
-    #BDX.enable_torque()
+    BDX.enable_torque()
     time.sleep(2)
 
-    for i in range(1000):
-        # read position 
-        pos, state = BDX.get_position()
-        print("Position =", pos)
-        # read velocity 
-        vel, state = BDX.get_velocity()
-        print("Angular velocity =", vel)
-        # read input voltage 
-        volt, state = BDX.get_voltage(mean=True)
-        print("Input voltage =", volt)
+    # set default angles
+    BDX.set_position(zeros_position)
+
+    # read position 
+    pos, state = BDX.get_position()
+    print("Position =", pos)
+    # read velocity 
+    vel, state = BDX.get_velocity()
+    print("Angular velocity =", vel)
+    # read input voltage 
+    volt, state = BDX.get_voltage(mean=True)
+    print("Input voltage =", volt)
 
     # disable torque and close COM
-    #BDX.disable_torque()
+    BDX.disable_torque()
     portHandler.closePort()
     print("Port closed !")
