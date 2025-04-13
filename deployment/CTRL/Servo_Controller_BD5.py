@@ -369,7 +369,7 @@ if __name__=='__main__':
     time.sleep(2)
 
     # set default angles
-    BDX.set_position(zeros_position)
+    BDX.set_position(default_angles_full)
 
     # read position 
     pos, state = BDX.get_position()
