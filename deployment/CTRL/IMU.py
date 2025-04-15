@@ -68,6 +68,7 @@ class IMU:
                 gyro = np.array(self.imu.gyro).copy()
                 accelerometer = np.array(self.imu.acceleration).copy()
                 gravity = np.array(self.imu.gravity).copy()
+                gravity = gravity / np.linalg.norm(gravity)
                  
             except Exception as e:
                 print("[IMU]:", e)
