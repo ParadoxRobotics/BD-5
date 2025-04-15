@@ -7,7 +7,6 @@ from adafruit_bno08x import (
     BNO_REPORT_GRAVITY
 )
 
-import os
 import time
 from queue import Queue
 from threading import Thread
@@ -55,8 +54,8 @@ class IMU:
         
         self.last_imu_data = {
             "gyro": [0, 0, 0],
-            "accelero": [0, 0, 0],
-            "orientation": [0, 0, 0],
+            "accelerometer": [0, 0, 0],
+            "gravity": [0, 0, 0],
         }
         self.imu_queue = Queue(maxsize=1)
         Thread(target=self.imu_worker, daemon=True).start()
@@ -67,23 +66,23 @@ class IMU:
             try:
                 # get data 
                 gyro = np.array(self.imu.gyro).copy()
-                acceleration = np.array(self.imu.acceleration).copy()
-                orientation = np.array(self.imu.gravity).copy()
+                accelerometer = np.array(self.imu.acceleration).copy()
+                gravity = np.array(self.imu.gravity).copy()
                  
             except Exception as e:
                 print("[IMU]:", e)
                 continue
 
-            if gyro is None or acceleration is None or orientation is None:
+            if gyro is None or accelerometer is None or gravity is None:
                 continue
 
-            if gyro.any() is None or acceleration.any() is None or orientation.any() is None:
+            if gyro.any() is None or accelerometer.any() is None or gravity.any() is None:
                 continue
 
             data = {
                 "gyro": gyro,
-                "accelero": acceleration,
-                "orientation": orientation,
+                "accelerometer": accelerometer,
+                "gravity": gravity,
             }
 
             self.imu_queue.put(data)
@@ -104,7 +103,7 @@ if __name__ == "__main__":
     while True:
         data = imu.get_data()
         print("gyro", np.around(data["gyro"], 3))
-        print("acceleration", np.around(data["acceleration"], 3))
-        print("orientation", np.around(data["orientation"], 3))
+        print("accelerometer", np.around(data["accelerometer"], 3))
+        print("gravity", np.around(data["gravity"], 3))
         print("---")
         time.sleep(1 / 25)

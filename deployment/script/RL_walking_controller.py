@@ -165,7 +165,7 @@ class RLWalk:
         obs = np.hstack([
             imu_data["gyro"],
             imu_data["acceleration"],
-            imu_data["orientation"],
+            imu_data["gravity"],
             self.last_command,
             joint_angles,
             joint_velocities,
