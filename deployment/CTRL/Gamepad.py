@@ -113,7 +113,7 @@ class Gamepad:
 
 
 if __name__ == "__main__":
-    controller = Gamepad(command_freq=20, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], head_range=[-0,5236, 0,5236], deadzone=0.05)
+    controller = Gamepad(command_freq=20, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], head_range=[-0.5236, 0.5236], deadzone=0.05)
 
     while True:
         print(controller.get_last_command())
