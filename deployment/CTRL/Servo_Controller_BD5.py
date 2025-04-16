@@ -381,8 +381,9 @@ if __name__=='__main__':
         # get command from gamepad
         last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
         controlled_head = [default_angles_head[0], default_angles_head[1] + head_t]
+        print(controlled_head)
         # set default angles
-        BDX.set_position(default_angles_leg + controlled_head)
+        BDX.set_position(default_angles_full)
         # read position 
         pos, state = BDX.get_position()
         print("Position =", pos)
@@ -392,7 +393,7 @@ if __name__=='__main__':
         # read input voltage 
         volt, state = BDX.get_voltage(mean=True)
         print("Input voltage =", volt)
-        time.sleep(0.0002)
+        time.sleep(0.002)
     print("stop moving !")
     time.sleep(2)
     # disable torque and close COM
