@@ -326,7 +326,7 @@ class ServoControllerBD5():
 
 if __name__=='__main__':   
     import time 
-    import Gamepad
+    from Gamepad import Gamepad
 
     # Init gamepad
     controller = Gamepad(command_freq=50, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], head_range=[-0,5236, 0,5236], deadzone=0.05)
