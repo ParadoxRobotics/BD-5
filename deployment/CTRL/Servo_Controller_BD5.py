@@ -326,6 +326,11 @@ class ServoControllerBD5():
 
 if __name__=='__main__':   
     import time 
+    import Gamepad
+
+    # Init gamepad
+    controller = Gamepad(command_freq=50, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], head_range=[-0,5236, 0,5236], deadzone=0.05)
+
     # param
     port = "/dev/ttyUSB0"
     baudrate = 1000000
@@ -372,9 +377,12 @@ if __name__=='__main__':
     BDX.enable_torque()
     time.sleep(2)
     print("start moving !")
-    for i in range(1000):
+    for i in range(100):
+        # get command from gamepad
+        lin_vel_x, lin_vel_y, ang_vel, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
+        controlled_head = [default_angles_head[0], default_angles_head[1] + head_t]
         # set default angles
-        BDX.set_position(default_angles_full)
+        BDX.set_position(default_angles_leg + controlled_head)
         # read position 
         pos, state = BDX.get_position()
         print("Position =", pos)

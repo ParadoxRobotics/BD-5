@@ -5,11 +5,12 @@ import time
 import numpy as np
 
 class Gamepad:
-    def __init__(self, command_freq, vel_range_x, vel_range_y, vel_range_rot, deadzone):
+    def __init__(self, command_freq, vel_range_x, vel_range_y, vel_range_rot, head_range, deadzone):
         self.command_freq = command_freq
         self.vel_range_x = vel_range_x
         self.vel_range_y = vel_range_y
         self.vel_range_rot = vel_range_rot
+        self.head_range = head_range
         self.deadzone = deadzone
 
         self.last_commands = [0.0, 0.0, 0.0]
@@ -64,9 +65,9 @@ class Gamepad:
             ang_vel *= np.abs(self.vel_range_rot[0])
 
         if head_t >= 0:
-            head_t *= np.abs(1.0)
+            head_t *= np.abs(self.head_range[1])
         else:
-            head_t *= np.abs(-1.0)
+            head_t *= np.abs(self.head_range[0])
 
 
         if abs(lin_vel_x) < self.deadzone:
@@ -112,7 +113,7 @@ class Gamepad:
 
 
 if __name__ == "__main__":
-    controller = Gamepad(command_freq=20, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], deadzone=0.05)
+    controller = Gamepad(command_freq=20, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], head_range=[-0,5236, 0,5236], deadzone=0.05)
 
     while True:
         print(controller.get_last_command())
