@@ -26,8 +26,8 @@ class ServoControllerBD5():
             "right_hip_pitch": 7, # XM430-W350-T
             "right_knee": 9, # XM430-W350-T
             "right_ankle": 11, # XM430-W350-T
-            "neck_pitch": 2, # XC430-W150-T
-            "head_pitch": 1, # XC430-W150-T
+            "neck_pitch": 1, # XC430-W150-T
+            "head_pitch": 2, # XC430-W150-T
         }
         self.joint_ID_list = list(self.joints_ID.values())
 
@@ -329,7 +329,7 @@ if __name__=='__main__':
     from Gamepad import Gamepad
 
     # Init gamepad
-    controller = Gamepad(command_freq=50, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], head_range=[-0,5236, 0,5236], deadzone=0.05)
+    controller = Gamepad(command_freq=50, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], head_range=[-0.5236, 0.5236], deadzone=0.05)
 
     # param
     port = "/dev/ttyUSB0"
@@ -377,7 +377,7 @@ if __name__=='__main__':
     BDX.enable_torque()
     time.sleep(2)
     print("start moving !")
-    for i in range(100):
+    for i in range(10):
         # get command from gamepad
         last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
         controlled_head = [default_angles_head[0], default_angles_head[1] + head_t]
@@ -387,13 +387,11 @@ if __name__=='__main__':
         # read position 
         pos, state = BDX.get_position()
         print("Position =", pos)
+        time.sleep(0.0002)
         # read velocity 
         vel, state = BDX.get_velocity()
         print("Angular velocity =", vel)
-        # read input voltage 
-        volt, state = BDX.get_voltage(mean=True)
-        print("Input voltage =", volt)
-        time.sleep(0.002)
+        time.sleep(0.0002)
     print("stop moving !")
     time.sleep(2)
     # disable torque and close COM
