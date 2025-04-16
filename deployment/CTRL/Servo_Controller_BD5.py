@@ -382,7 +382,7 @@ if __name__=='__main__':
         last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
         controlled_head = [default_angles_head[0], default_angles_head[1] + head_t]
         # set default angles
-        BDX.set_position(default_angles_full)
+        BDX.set_position(default_angles_leg+controlled_head)
         # read position 
         pos, state = BDX.get_position()
         print("Position =", pos)
