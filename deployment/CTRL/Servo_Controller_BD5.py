@@ -377,11 +377,11 @@ if __name__=='__main__':
     BDX.enable_torque()
     time.sleep(2)
     print("start moving !")
-    for i in range(10):
+    for i in range(100):
         # get command from gamepad
         last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
         controlled_head = [default_angles_head[0], default_angles_head[1] + head_t]
-        print(controlled_head)
+        print("HEAD", head_t, controlled_head)
         # set default angles
         BDX.set_position(default_angles_full)
         # read position 
