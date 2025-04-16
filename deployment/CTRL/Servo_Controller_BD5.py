@@ -372,6 +372,9 @@ if __name__=='__main__':
     default_angles_full = default_angles_leg + default_angles_head
     zeros_position = [0.0] * len(default_angles_full)
 
+    smoothed_angles = 0
+    tau = 0.2
+
     time.sleep(2)
     # enable torque
     BDX.enable_torque()
@@ -380,9 +383,10 @@ if __name__=='__main__':
     for i in range(1000):
         # get command from gamepad
         last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
-        controlled_head = [default_angles_head[0], default_angles_head[1] + head_t]
+        smoothed_angles = tau * (head_t) + (1 - tau) * smoothed_angles
+        controlled_head = [default_angles_head[0], default_angles_head[1] + smoothed_angles]
         # set default angles
-        BDX.set_position(default_angles_leg+controlled_head)
+        BDX.set_position(default_angles_leg + controlled_head)
         # read position 
         pos, state = BDX.get_position()
         print("Position =", pos)
