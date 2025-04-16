@@ -329,7 +329,7 @@ if __name__=='__main__':
     from Gamepad import Gamepad
 
     # Init gamepad
-    controller = Gamepad(command_freq=50, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], head_range=[-0.5236, 0.5236], deadzone=0.05)
+    controller = Gamepad(command_freq=80, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], head_range=[-0.5236, 0.5236], deadzone=0.05)
 
     # param
     port = "/dev/ttyUSB0"
@@ -377,21 +377,20 @@ if __name__=='__main__':
     BDX.enable_torque()
     time.sleep(2)
     print("start moving !")
-    for i in range(100):
+    for i in range(1000):
         # get command from gamepad
         last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
         controlled_head = [default_angles_head[0], default_angles_head[1] + head_t]
-        print("HEAD", head_t, controlled_head)
         # set default angles
         BDX.set_position(default_angles_full)
         # read position 
         pos, state = BDX.get_position()
         print("Position =", pos)
-        time.sleep(0.0002)
+        time.sleep(0.002)
         # read velocity 
         vel, state = BDX.get_velocity()
         print("Angular velocity =", vel)
-        time.sleep(0.0002)
+        time.sleep(0.002)
     print("stop moving !")
     time.sleep(2)
     # disable torque and close COM
