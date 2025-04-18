@@ -358,6 +358,7 @@ if __name__=='__main__':
         raise Exception("Error in servos ID or state !")
     
     # set default angles
+    """
     default_angles_leg = [0.0, 
                           0.0, 
                           0.82498, 
@@ -368,19 +369,29 @@ if __name__=='__main__':
                           0.82498,
                           1.64996,
                           0.82498]
+    """
+    default_angles_leg = [0.106, 
+                          -0.202, 
+                          0.82498, 
+                          1.64996,
+                          0.82498,
+                          -0.106,
+                          -0.202,
+                          0.82498,
+                          1.64996,
+                          0.82498]
     default_angles_head = [0.5306, -0.5306]
     default_angles_full = default_angles_leg + default_angles_head
     zeros_position = [0.0] * len(default_angles_full)
-
+    # Smoothed angles
     smoothed_angles = 0
-    tau = 0.2
-
+    tau = 0.4
     time.sleep(2)
     # enable torque
     BDX.enable_torque()
     time.sleep(2)
     print("start moving !")
-    for i in range(1000):
+    for i in range(10):
         # get command from gamepad
         last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
         smoothed_angles = tau * (head_t) + (1 - tau) * smoothed_angles

@@ -66,7 +66,7 @@ class RLWalk:
         self.model_path = onnx_model_path
         self.policy = OnnxInfer(self.model_path)
 
-        # Init action scale and memory
+        # Init action scale, position and memory
         self._action_scale = action_scale
         self._default_angles_leg = [0.0, 
                                     0.0, 
@@ -78,10 +78,12 @@ class RLWalk:
                                     0.82498,
                                     1.64996,
                                     0.82498]
-        # TODO : add default head position 
         self._default_angles_head = [0.5306, -0.5306]
         self._default_angles_full = self._default_angles_leg + self._default_angles_head
-
+        # Init position and velocity
+        self.current_qpos = [0.0] * len(self._default_angles_leg)
+        self.current_qvel = [0.0] * len(self._default_angles_leg)
+        # Action memory
         self._last_action = np.zeros_like(self._default_angles_leg, dtype=np.float32)
         self._last_last_action = np.zeros_like(self._default_angles_leg, dtype=np.float32)
         self._last_last_last_action = np.zeros_like(self._default_angles_leg, dtype=np.float32)
@@ -93,6 +95,8 @@ class RLWalk:
 
         # Time management
         self._ctrl_dt = 1 / control_freq
+        self.smooth_neck = 0.0
+        self.tau_neck = 0.4
 
         # Phase init -> in real case self._ctrl_dt = self._n_substeps * self._sim_dt
         self._phase = np.array([0.0, np.pi])
@@ -100,7 +104,12 @@ class RLWalk:
         self._phase_dt = 2 * np.pi * self._gait_freq * self._ctrl_dt 
 
         # Init joystick
-        self.joystick = Gamepad(command_freq=control_freq, vel_range_x=vel_range_x, vel_range_y=vel_range_y, vel_range_rot=vel_range_rot, deadzone=0.04)
+        self.joystick = Gamepad(command_freq=control_freq, 
+                                vel_range_x=vel_range_x, 
+                                vel_range_y=vel_range_y, 
+                                vel_range_rot=vel_range_rot, 
+                                head_range=[-0.5236, 0.5236], 
+                                deadzone=0.05)
         self.last_command = [0.0, 0.0, 0.0]
         self.last_head_tilt = 0.0
         self.ENABLE = False
@@ -150,7 +159,7 @@ class RLWalk:
     def get_obs(self):
         # get IMU data  
         imu_data = self.imu.get_data()
-        # get Dynamixel data
+        # get Dynamixel data # TODO : add check for success
         current_qpos, success = self.servo.get_position()
         current_qvel, success = self.servo.get_velocity()
         current_qpos = np.array(current_qpos)
@@ -185,6 +194,9 @@ class RLWalk:
                 t = time.time()
                 # get command from joystick
                 self.last_command, head_tilt, Akey, Xkey, Bkey, Ykey = self.joystick.get_last_command()
+                # get head tilt command # TODO : update only if it changed
+                self.smooth_neck = self.tau_neck * head_tilt + (1 - self.tau_neck) * self.smooth_neck
+                controlled_neck = [self._default_angles_head[0], self._default_angles_head[1] + self.smooth_neck]
                 # Activate the robot
                 if Akey == True:
                     self.ENABLE = True
@@ -216,8 +228,8 @@ class RLWalk:
                                                 self.prev_motor_targets + self.max_motor_speed * (self._ctrl_dt)
                                                 )
                     self.prev_motor_targets = self.motor_targets.copy()
-                    # send motor target to servos # TODO : add head control
-                    target_position = list(self.motor_targets) + self._default_angles_head 
+                    # send motor target to servos 
+                    target_position = list(self.motor_targets) + controlled_neck 
                     self.servo.set_position(value=target_position)
                     # time control 
                     i+=1
