@@ -358,7 +358,6 @@ if __name__=='__main__':
         raise Exception("Error in servos ID or state !")
     
     # set default angles
-    """
     default_angles_leg = [0.0, 
                           0.0, 
                           0.82498, 
@@ -366,17 +365,6 @@ if __name__=='__main__':
                           0.82498,
                           0.0,
                           0.0,
-                          0.82498,
-                          1.64996,
-                          0.82498]
-    """
-    default_angles_leg = [0.106, 
-                          -0.202, 
-                          0.82498, 
-                          1.64996,
-                          0.82498,
-                          -0.106,
-                          -0.202,
                           0.82498,
                           1.64996,
                           0.82498]
