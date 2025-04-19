@@ -383,12 +383,10 @@ if __name__=='__main__':
 
     # Command Logic
     PAUSED = False
-    ENABLE = False
 
-    while ENABLE == False:
+    while True:
         last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
         if C_pressed == True:
-            ENABLE = True
             print("BD-5 ACTIVATE !")
             break
 
@@ -412,13 +410,14 @@ if __name__=='__main__':
                 print("Port closed !")
                 break
             # Pause inference/action process 
-            if T_pressed == True and PAUSED == False:
-                PAUSED = True
-                print("PAUSED !")
-            if T_pressed == True and PAUSED == True:
-                PAUSED = False
-            # loop over inference/action process
-            if PAUSED == True:
+            if T_pressed == True:
+                PAUSED = not PAUSED
+                if PAUSED:
+                    print("PAUSE")
+                else:
+                    print("UNPAUSE")
+
+            if PAUSED:
                 time.sleep(0.1)
                 continue
 
