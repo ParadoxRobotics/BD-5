@@ -414,6 +414,7 @@ if __name__=='__main__':
             # Pause inference/action process 
             if T_pressed == True and PAUSED == False:
                 PAUSED = True
+                print("PAUSED !")
             if T_pressed == True and PAUSED == True:
                 PAUSED = False
             # loop over inference/action process
