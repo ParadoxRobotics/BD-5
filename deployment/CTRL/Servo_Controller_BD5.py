@@ -418,7 +418,7 @@ if __name__=='__main__':
                     print("UNPAUSE")
 
             if PAUSED:
-                time.sleep(0.1)
+                time.sleep(0.01)
                 continue
 
             # set default angles
