@@ -10,8 +10,6 @@ import time
 from queue import Queue
 from threading import Thread
 import numpy as np
-from scipy.spatial.transform import Rotation as R
-
 
 class IMU:
     def __init__(

@@ -24,7 +24,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     oi = OnnxInfer(args.onnx_model_path)
-    inputs = np.random.uniform(size=54).astype(np.float32)
+    inputs = np.random.uniform(size=63).astype(np.float32)
     inputs = np.arange(47).astype(np.float32)
     times = []
     for i in range(1000):

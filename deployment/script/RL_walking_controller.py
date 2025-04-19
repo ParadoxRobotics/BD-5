@@ -205,7 +205,7 @@ class RLWalk:
                     self.stop_robot()
                     break
                 # Pause inference/action process 
-                if T_pressed == True:
+                if S_pressed == True:
                     self.PAUSED = True
                     self.ENABLE = False
                 # loop over inference/action process

@@ -382,8 +382,19 @@ if __name__=='__main__':
     tau = 0.4
 
     # Command Logic
-    ENABLE = False
     PAUSED = False
+    ENABLE = False
+
+    while ENABLE == False:
+        last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
+        if C_pressed == True:
+            ENABLE = True
+            print("BD-5 ACTIVATE !")
+            break
+
+    # Activate + Set default angles
+    BDX.enable_torque()
+    BDX.set_position(default_angles_full)
 
     try:
         i = 0
@@ -393,52 +404,43 @@ if __name__=='__main__':
             smoothed_angles = tau * (head_t) + (1 - tau) * smoothed_angles
             controlled_head = [default_angles_head[0], default_angles_head[1] + smoothed_angles]
 
-            # Activate the robot when pressed on circle 
-            if C_pressed == True:
-                ENABLE = True
-                PAUSED = False
-                BDX.enable_torque()
-                BDX.set_position(default_angles_full)
             # Kill-switch exit program
             if X_pressed == True:
-                ENABLE = False
                 print("Kill switch pressed !")
                 BDX.disable_torque()
                 portHandler.closePort()
                 print("Port closed !")
                 break
             # Pause inference/action process 
-            if T_pressed == True:
+            if T_pressed == True and PAUSED == False:
                 PAUSED = True
-                ENABLE = False
+            if T_pressed == True and PAUSED == True:
+                PAUSED = False
             # loop over inference/action process
             if PAUSED == True:
                 time.sleep(0.1)
                 continue
 
-            if ENABLE:
-                # set default angles
-                BDX.set_position(default_angles_leg + controlled_head)
-                # read position 
-                pos, state = BDX.get_position()
-                vel, state = BDX.get_velocity()
-                if len(pos) > 0 or len(vel) > 0:
-                    print("Position =", pos)
-                    print("Angular velocity =", vel)
-                else:
-                    print("No data available !")
-                    continue
-                # time control 
-                i+=1
-                took = time.time() - t
-                if (1 / ctrl_freq - took) < 0:
-                    print(
-                        "Policy control budget exceeded by",
-                        np.around(took - 1 / ctrl_freq, 3),
-                    )
-                time.sleep(max(0, 1 / ctrl_freq - took))
+            # set default angles
+            BDX.set_position(default_angles_leg + controlled_head)
+            # read position 
+            pos, state = BDX.get_position()
+            vel, state = BDX.get_velocity()
+            if len(pos) > 0 or len(vel) > 0:
+                print("Position =", pos)
+                print("Angular velocity =", vel)
             else:
+                print("No data available !")
                 continue
+            # time control 
+            i+=1
+            took = time.time() - t
+            if (1 / ctrl_freq - took) < 0:
+                print(
+                    "Policy control budget exceeded by",
+                    np.around(took - 1 / ctrl_freq, 3),
+                )
+            time.sleep(max(0, 1 / ctrl_freq - took))
 
     except KeyboardInterrupt:
         print("KeyboardInterrupt detected !")
