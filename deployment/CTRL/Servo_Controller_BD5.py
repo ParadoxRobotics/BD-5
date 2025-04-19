@@ -326,12 +326,18 @@ class ServoControllerBD5():
 
 if __name__=='__main__':   
     import time 
+    import numpy as np
     from Gamepad import Gamepad
 
-    # Init gamepad
-    controller = Gamepad(command_freq=80, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], head_range=[-0.5236, 0.5236], deadzone=0.05)
+    # Time param
+    command_freq = 20
+    ctrl_freq = 50
+    ctrl_dt = 1.0 / ctrl_freq
 
-    # param
+    # Init gamepad
+    controller = Gamepad(command_freq=command_freq, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], head_range=[-0.5236, 0.5236], deadzone=0.05)
+
+    # Dxl param
     port = "/dev/ttyUSB0"
     baudrate = 1000000
     # connect to U2D2
@@ -374,29 +380,71 @@ if __name__=='__main__':
     # Smoothed angles
     smoothed_angles = 0
     tau = 0.4
-    time.sleep(2)
-    # enable torque
-    BDX.enable_torque()
-    time.sleep(2)
-    print("start moving !")
-    for i in range(10):
-        # get command from gamepad
-        last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
-        smoothed_angles = tau * (head_t) + (1 - tau) * smoothed_angles
-        controlled_head = [default_angles_head[0], default_angles_head[1] + smoothed_angles]
-        # set default angles
-        BDX.set_position(default_angles_leg + controlled_head)
-        # read position 
-        pos, state = BDX.get_position()
-        print("Position =", pos)
-        time.sleep(0.002)
-        # read velocity 
-        vel, state = BDX.get_velocity()
-        print("Angular velocity =", vel)
-        time.sleep(0.002)
-    print("stop moving !")
-    time.sleep(2)
-    # disable torque and close COM
-    BDX.disable_torque()
-    portHandler.closePort()
-    print("Port closed !")
+
+    # Command Logic
+    ENABLE = False
+    PAUSED = False
+
+    try:
+        i = 0
+        while True:
+            t = time.time()
+            last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
+            smoothed_angles = tau * (head_t) + (1 - tau) * smoothed_angles
+            controlled_head = [default_angles_head[0], default_angles_head[1] + smoothed_angles]
+
+            # Activate the robot when pressed on circle 
+            if C_pressed == True:
+                ENABLE = True
+                PAUSED = False
+                BDX.enable_torque()
+                BDX.set_position(default_angles_full)
+            # Kill-switch exit program
+            if X_pressed == True:
+                ENABLE = False
+                print("Kill switch pressed !")
+                BDX.disable_torque()
+                portHandler.closePort()
+                print("Port closed !")
+                break
+            # Pause inference/action process 
+            if T_pressed == True:
+                PAUSED = True
+                ENABLE = False
+            # loop over inference/action process
+            if PAUSED == True:
+                time.sleep(0.1)
+                continue
+
+            if ENABLE:
+                # set default angles
+                BDX.set_position(default_angles_leg + controlled_head)
+                # read position 
+                pos, state = BDX.get_position()
+                vel, state = BDX.get_velocity()
+                if len(pos) > 0 or len(vel) > 0:
+                    print("Position =", pos)
+                    print("Angular velocity =", vel)
+                else:
+                    print("No data available !")
+                    continue
+                # time control 
+                i+=1
+                took = time.time() - t
+                if (1 / ctrl_freq - took) < 0:
+                    print(
+                        "Policy control budget exceeded by",
+                        np.around(took - 1 / ctrl_freq, 3),
+                    )
+                time.sleep(max(0, 1 / ctrl_freq - took))
+            else:
+                continue
+
+    except KeyboardInterrupt:
+        print("KeyboardInterrupt detected !")
+        BDX.disable_torque()
+        portHandler.closePort()
+        print("Port closed !")
+        raise
+
+
