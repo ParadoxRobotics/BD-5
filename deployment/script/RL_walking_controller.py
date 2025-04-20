@@ -125,9 +125,16 @@ class BD5RLController:
             print("Succeeded to change the baudrate to %d bps!" % DXL_Baudrate)
         else:
             self.portHandler.closePort()
-            raise Exception("Failed to change the baudrate to %d bps!" % DXL_Baudrate)
+            raise Exception("Failed to change the baudrate to %d bps!" % DXL_Baudrate)     
+
         # init servos class
         self.servo = ServoControllerBD5(portHandler=self.portHandler, packetHandler=self.packetHandler)
+        # ping all servos 
+        if self.servo.ping():
+            print("Servos ready !")
+        else:
+            self.portHandler.closePort()
+            raise Exception("Error in servos ID or state !")   
 
         # Init IMU
         self.pitch_bias = pitch_bias
