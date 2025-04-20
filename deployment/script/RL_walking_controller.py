@@ -131,10 +131,7 @@ class BD5RLController:
 
         # Init IMU
         self.pitch_bias = pitch_bias
-        self.imu = IMU(
-            sampling_freq=int(self.control_freq),
-            user_pitch_bias=self.pitch_bias,
-        )
+        self.imu = IMU(sampling_freq=self.control_freq, user_pitch_bias=self.pitch_bias, calibrate=False)
 
     def start_robot(self):
         print("START BD-5...")
