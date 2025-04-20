@@ -129,7 +129,7 @@ class ServoControllerBD5():
     def dxl2velocity(self, value):
         # Velocity value coded on 32bits
         for i in range(len(value)):
-            if value[i] > 2 ** (4 * 8 - 1): 
+            if value[i] >= 2 ** (4 * 8 - 1): 
                 value[i] = value[i] - 2 ** (4 * 8)
             value[i] = (value[i] * 0.229) * self.rpm2rads  # unit 0.229 rev/min -> to rad/s 
         return value

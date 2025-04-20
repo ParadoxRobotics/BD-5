@@ -40,13 +40,14 @@ class BD5RLController:
         pitch_bias: float = 0,
         control_freq: float = 50, # 50 Hz
         command_freq: float = 20, # 20 Hz
+        cutoff_frequency: float = 40, # or 40Hz
         action_scale: float = 0.3,
         gait_freq: float = 1.0,
         max_motor_speed: float = 4.82,
         vel_range_x: float = [-0.6, 0.6],
         vel_range_y: float = [-0.6, 0.6],
         vel_range_rot: float = [-1.0, 1.0],
-        cutoff_frequency=40, # or 40Hz
+        
     ):
         # Init Model 
         self.model_path = onnx_model_path
@@ -199,7 +200,6 @@ class BD5RLController:
                 controlled_neck = [self._default_angles_head[0], self._default_angles_head[1] + self.smooth_neck]
                 # Kill-switch exit program
                 if X_pressed == True:
-                    self.ENABLE = False
                     self.stop_robot()
                     self.portHandler.closePort()
                     print("Port closed !")
@@ -226,7 +226,7 @@ class BD5RLController:
                 self._last_last_last_action = self._last_last_action.copy()
                 self._last_last_action = self._last_action.copy()
                 self._last_action = onnx_pred.copy()
-                # update motor targets -> in real case self._ctrl_dt = self._n_substeps * self._sim_dt
+                # update motor targets
                 self.motor_targets = onnx_pred * self._action_scale + self._default_angles_leg
                 self.motor_targets = np.clip(self.motor_targets, 
                                             self.prev_motor_targets - self.max_motor_speed * (self._ctrl_dt),
@@ -275,7 +275,7 @@ if __name__ == "__main__":
     parser.add_argument("--vel_range_rot", type=float, nargs=2, default=[-1.0, 1.0])
     parser.add_argument("--DXL_port", type=str, default="/dev/ttyUSB0")
     parser.add_argument("--DXL_Baudrate", type=int, default=1000000)
-    parser.add_argument("--cutoff_frequency", type=float, default=None)
+    parser.add_argument("--cutoff_frequency", type=float, default=40)
 
     args = parser.parse_args()
 
@@ -286,13 +286,13 @@ if __name__ == "__main__":
         pitch_bias=args.pitch_bias,
         control_freq=args.control_freq,
         command_freq=args.command_freq,
+        cutoff_frequency=args.cutoff_frequency
         action_scale=args.action_scale,
         gait_freq=args.gait_freq,
         max_motor_speed=args.max_motor_speed,
         vel_range_x=args.vel_range_x,
         vel_range_y=args.vel_range_y,
         vel_range_rot=args.vel_range_rot,
-        cutoff_frequency=args.cutoff_frequency
     )
 
     print("BD-5 RL Controller initialized !")
