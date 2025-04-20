@@ -31,7 +31,7 @@ class LowPassActionFilter:
         )
         return self.last_action
 
-class RLWalk:
+class BD5RLController:
     def __init__(
         self,
         onnx_model_path: str,
@@ -179,7 +179,6 @@ class RLWalk:
         return obs.astype(np.float32)
     
     def run(self):
-        # TODO : Wait for joystick connection
         # Wait to start the BD-5
         while True:
             self.last_command, head_tilt, S_pressed, T_pressed, C_pressed, X_pressed = self.joystick.get_last_command()
@@ -259,3 +258,42 @@ class RLWalk:
             self.portHandler.closePort()
             print("Port closed !")
             pass
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--onnx_model_path", type=str, required=True)
+    parser.add_argument("--action_scale", type=float, default=0.3)
+    parser.add_argument("--control_freq", type=int, default=50)
+    parser.add_argument("--command_freq", type=int, default=20)
+    parser.add_argument("--pitch_bias", type=float, default=0, help="deg")
+    parser.add_argument("--gait_freq", type=float, default=1.0)
+    parser.add_argument("--max_motor_speed", type=float, default=4.82)
+    parser.add_argument("--vel_range_x", type=float, nargs=2, default=[-0.6, 0.6])
+    parser.add_argument("--vel_range_y", type=float, nargs=2, default=[-0.6, 0.6])
+    parser.add_argument("--vel_range_rot", type=float, nargs=2, default=[-1.0, 1.0])
+    parser.add_argument("--DXL_port", type=str, default="/dev/ttyUSB0")
+    parser.add_argument("--DXL_Baudrate", type=int, default=1000000)
+    parser.add_argument("--cutoff_frequency", type=float, default=None)
+
+    args = parser.parse_args()
+
+    BD5_ctrl = BD5RLController(
+        onnx_model_path=args.onnx_model_path,
+        DXL_port=args.DXL_port,
+        DXL_Baudrate=args.DXL_Baudrate,
+        pitch_bias=args.pitch_bias,
+        control_freq=args.control_freq,
+        command_freq=args.command_freq,
+        action_scale=args.action_scale,
+        gait_freq=args.gait_freq,
+        max_motor_speed=args.max_motor_speed,
+        vel_range_x=args.vel_range_x,
+        vel_range_y=args.vel_range_y,
+        vel_range_rot=args.vel_range_rot,
+        cutoff_frequency=args.cutoff_frequency
+    )
+
+    print("BD-5 RL Controller initialized !")
+    BD5_ctrl.run()
