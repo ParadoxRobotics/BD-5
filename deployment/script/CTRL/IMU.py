@@ -58,6 +58,7 @@ class IMU:
             "gyro": [0, 0, 0],
             "accelerometer": [0, 0, 0],
             "gravity": [0, 0, 0],
+            "gravity_mat": [0, 0, 0],
         }
         self.imu_queue = Queue(maxsize=1)
         Thread(target=self.imu_worker, daemon=True).start()
