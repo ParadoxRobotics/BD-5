@@ -83,6 +83,7 @@ class BD5RLController:
         self.prev_motor_targets = self._default_angles_leg.copy()
 
         # Time management
+        self.control_freq = control_freq
         self._ctrl_dt = 1 / control_freq
         self.smooth_neck = 0.0
         self.tau_neck = 0.4
