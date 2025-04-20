@@ -126,7 +126,7 @@ class BD5RLController:
             self.portHandler.closePort()
             raise Exception("Failed to change the baudrate to %d bps!" % DXL_Baudrate)
         # init servos class
-        self.servo = ServoControllerBD5(portHandler=self.packetHandler, packetHandler=self.portHandler)
+        self.servo = ServoControllerBD5(portHandler=self.portHandler, packetHandler=self.packetHandler)
 
         # Init IMU
         self.pitch_bias = pitch_bias
