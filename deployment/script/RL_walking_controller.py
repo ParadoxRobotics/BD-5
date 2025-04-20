@@ -112,21 +112,21 @@ class RLWalk:
             self.action_filter = LowPassActionFilter(self.control_freq, cutoff_frequency)
 
         # Init Servo Controller
-        portHandler = PortHandler(DXL_port)
-        packetHandler = PacketHandler(2.0)
+        self.portHandler = PortHandler(DXL_port)
+        self.packetHandler = PacketHandler(2.0)
         # check connection 
-        if portHandler.openPort():
+        if self.portHandler.openPort():
             print("Successfully opened the port at %s!" % DXL_port)
         else:
-            portHandler.closePort()
+            self.portHandler.closePort()
             raise Exception("Failed to open the port at %s!", DXL_port)
-        if portHandler.setBaudRate(DXL_Baudrate):
+        if self.portHandler.setBaudRate(DXL_Baudrate):
             print("Succeeded to change the baudrate to %d bps!" % DXL_Baudrate)
         else:
-            portHandler.closePort()
+            self.portHandler.closePort()
             raise Exception("Failed to change the baudrate to %d bps!" % DXL_Baudrate)
         # init servos class
-        self.servo = ServoControllerBD5(portHandler=portHandler, packetHandler=packetHandler)
+        self.servo = ServoControllerBD5(portHandler=self.packetHandler, packetHandler=self.portHandler)
 
         # Init IMU
         self.pitch_bias = pitch_bias
@@ -202,6 +202,8 @@ class RLWalk:
                 if X_pressed == True:
                     self.ENABLE = False
                     self.stop_robot()
+                    self.portHandler.closePort()
+                    print("Port closed !")
                     break
                 # Pause inference/action process 
                 if T_pressed == True:
@@ -252,4 +254,8 @@ class RLWalk:
                     )
                 time.sleep(max(0, 1 / self.control_freq - took))
         except KeyboardInterrupt:
+            print("KeyboardInterrupt detected !")
+            self.stop_robot()
+            self.portHandler.closePort()
+            print("Port closed !")
             pass
