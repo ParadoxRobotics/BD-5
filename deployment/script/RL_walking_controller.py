@@ -40,7 +40,7 @@ class BD5RLController:
         pitch_bias: float = 0,
         control_freq: float = 50, # 50 Hz
         command_freq: float = 20, # 20 Hz
-        cutoff_frequency: float = 40, # or 40Hz
+        cutoff_frequency: float = 10, # or 40Hz
         action_scale: float = 0.3,
         gait_freq: float = 1.0,
         max_motor_speed: float = 4.82,
