@@ -443,8 +443,8 @@ if __name__=='__main__':
             pos, state = BDX.get_position()
             vel, state = BDX.get_velocity()
             if len(pos) > 0 or len(vel) > 0:
-                print("Position =", pos)
-                print("Angular velocity =", vel)
+                print("Position =", pos, len(pos))
+                print("Angular velocity =", vel, len(vel))
             else:
                 print("No data available !")
                 continue
