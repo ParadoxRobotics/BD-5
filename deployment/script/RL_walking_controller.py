@@ -4,10 +4,10 @@ import numpy as np
 
 from dynamixel_sdk import *
 
-from CTRL.Servo_Controller_BD5 import ServoControllerBD5
-from CTRL.IMU import IMU
-from CTRL.ONNX_infer import OnnxInfer
-from CTRL.Gamepad import Gamepad
+from ...CTRL.Servo_Controller_BD5 import ServoControllerBD5
+from ...CTRL.IMU import IMU
+from ...CTRL.ONNX_infer import OnnxInfer
+from ...CTRL.Gamepad import Gamepad
 
 class LowPassActionFilter:
     def __init__(self, control_freq, cutoff_frequency=40.0):
