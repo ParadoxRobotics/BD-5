@@ -103,7 +103,6 @@ class BD5RLController:
         
         # Init command from joystick
         self.last_command = [0.0, 0.0, 0.0]
-        self.last_head_tilt = 0.0
         # Init command logic
         self.PAUSED = False
 
@@ -153,12 +152,12 @@ class BD5RLController:
         # get IMU data  
         imu_data = self.imu.get_data()
         # get Dynamixel data 
-        dxl_qpos, success_pos = self.servo.get_position()
-        dxl_qvel, success_vel = self.servo.get_velocity()
+        dxl_qpos, success_pos = self.servo.get_position(full=False) # Only recover the state of the legs
+        dxl_qvel, success_vel = self.servo.get_velocity(full=False) # Only recover the state of the legs
         if not success_pos or not success_vel or len(dxl_qpos) == 0 or len(dxl_qvel) == 0:
             return None
-        current_qpos = np.array(dxl_qpos[:2])
-        current_qvel = np.array(dxl_qvel[:2])
+        current_qpos = np.array(dxl_qpos) # Only recover the state of the legs
+        current_qvel = np.array(dxl_qvel) # Only recover the state of the legs
         # get joint angles delta and velocities
         joint_angles = current_qpos - self._default_angles_leg
         joint_velocities = current_qvel
