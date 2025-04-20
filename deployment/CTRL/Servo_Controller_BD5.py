@@ -101,11 +101,11 @@ class ServoControllerBD5():
         self.groupSyncRead_volt = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_VOLTAGE, self.LEN_PRESENT_VOLTAGE)
 
     # correct rotation 
-    def correctRotation(self, value):
+    def correctRotation(self, value, joint_list):
         corrected_value = []
         for i in range(len(value)):
             if value[i] != 0.0:
-                corrected_value.append(value[i] * self.joints_correction_list[i])
+                corrected_value.append(value[i] * joint_list[i])
             else:
                 corrected_value.append(value[i])
         return corrected_value
@@ -284,7 +284,7 @@ class ServoControllerBD5():
     # Set goal position to all servos 
     def set_position(self, value):
         # correct rotation
-        value = self.correctRotation(value)
+        value = self.correctRotation(value, self.joints_correction_list)
         # convert value to dxl 
         ang_pos = self.position2dxl(value=value)
         # Clamp value 
@@ -293,23 +293,39 @@ class ServoControllerBD5():
         self.syncWrite(self.groupSyncWrite_pos, self.joint_ID_list, ang_pos, self.LEN_GOAL_POSITION)
 
     # Get current velocity
-    def get_velocity(self):
-        # read raw angular velocity
-        velocities, success = self.syncRead(self.groupSyncRead_vel, self.joint_ID_list, self.ADDR_PRESENT_VELOCITY, self.LEN_PRESENT_VELOCITY)
-        # convert to rad/s
-        velocities = self.dxl2velocity(value=velocities)
-        # correct rotation
-        velocities = self.correctRotation(velocities)
+    def get_velocity(self, full=True):
+        if full:
+            # read raw angular velocity
+            velocities, success = self.syncRead(self.groupSyncRead_vel, self.joint_ID_list, self.ADDR_PRESENT_VELOCITY, self.LEN_PRESENT_VELOCITY)
+            # convert to rad/s
+            velocities = self.dxl2velocity(value=velocities)
+            # correct rotation
+            velocities = self.correctRotation(velocities, self.joints_correction_list)
+        else:
+            # read raw angular velocity
+            velocities, success = self.syncRead(self.groupSyncRead_vel, self.joint_ID_list[:10], self.ADDR_PRESENT_VELOCITY, self.LEN_PRESENT_VELOCITY)
+            # convert to rad/s
+            velocities = self.dxl2velocity(value=velocities)
+            # correct rotation
+            velocities = self.correctRotation(velocities, self.joints_correction_list[:10])
         return velocities, success
     
     # Get current position 
-    def get_position(self):
-        # read raw position 
-        positions, success = self.syncRead(self.groupSyncRead_pos, self.joint_ID_list, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
-        # convert to radian 
-        positions = self.dxl2position(value=positions)
-        # correct rotation
-        positions = self.correctRotation(positions)
+    def get_position(self, full=True):
+        if full:
+            # read raw position 
+            positions, success = self.syncRead(self.groupSyncRead_pos, self.joint_ID_list, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
+            # convert to radian 
+            positions = self.dxl2position(value=positions)
+            # correct rotation
+            positions = self.correctRotation(positions, self.joints_correction_list)
+        else:
+            # read raw position 
+            positions, success = self.syncRead(self.groupSyncRead_pos, self.joint_ID_list[:10], self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
+            # convert to radian 
+            positions = self.dxl2position(value=positions)
+            # correct rotation
+            positions = self.correctRotation(positions, self.joints_correction_list[:10])
         return positions, success
 
     # Get voltage input 
