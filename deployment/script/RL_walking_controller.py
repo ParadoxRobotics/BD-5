@@ -241,7 +241,7 @@ class BD5RLController:
                 # update previous motor targets
                 self.prev_motor_targets = self.motor_targets.copy()
                 # send motor target to servos 
-                target_position = list(self.motor_targets) + controlled_neck 
+                target_position = self.motor_targets.tolist() + controlled_neck 
                 self.servo.set_position(value=target_position)
                 # time control 
                 i+=1
