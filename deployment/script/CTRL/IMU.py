@@ -71,7 +71,7 @@ class IMU:
                 gyro = np.array(self.imu.gyro).copy()
                 accelerometer = np.array(self.imu.acceleration).copy()
                 gravity = np.array(self.imu.gravity).copy()
-                quat = np.array(self.imu.rotation_vector).copy()
+                quat = np.array(self.imu.quaternion).copy()
                 imu_rot = R.from_quat(quat)
                 imu_rot_inv = imu_rot.inv()
                 gravity_mat = imu_rot_inv.apply(self.transform_imu)
