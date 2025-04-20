@@ -153,9 +153,9 @@ class BD5RLController:
         # get IMU data  
         imu_data = self.imu.get_data()
         # get Dynamixel data 
-        dxl_qpos, success = self.servo.get_position()
-        dxl_qvel, success = self.servo.get_velocity()
-        if len(dxl_qpos) == 0 or len(dxl_qvel) == 0:
+        dxl_qpos, success_pos = self.servo.get_position()
+        dxl_qvel, success_vel = self.servo.get_velocity()
+        if not success_pos or not success_vel or len(dxl_qpos) == 0 or len(dxl_qvel) == 0:
             return None
         current_qpos = np.array(dxl_qpos[:2])
         current_qvel = np.array(dxl_qvel[:2])
@@ -197,7 +197,7 @@ class BD5RLController:
                 self.last_command, head_tilt, S_pressed, T_pressed, C_pressed, X_pressed = self.joystick.get_last_command()
                 # get head tilt command 
                 self.smooth_neck = self.tau_neck * head_tilt + (1 - self.tau_neck) * self.smooth_neck
-                controlled_neck = [self._default_angles_head[0], self._default_angles_head[1] + self.smooth_neck]
+                controlled_neck = [self._default_angles_head_list[0], self._default_angles_head_list[1] + self.smooth_neck]
                 # Kill-switch exit program
                 if X_pressed == True:
                     self.stop_robot()
@@ -275,7 +275,7 @@ if __name__ == "__main__":
     parser.add_argument("--vel_range_rot", type=float, nargs=2, default=[-1.0, 1.0])
     parser.add_argument("--DXL_port", type=str, default="/dev/ttyUSB0")
     parser.add_argument("--DXL_Baudrate", type=int, default=1000000)
-    parser.add_argument("--cutoff_frequency", type=float, default=40)
+    parser.add_argument("--cutoff_frequency", type=float, default=None)
 
     args = parser.parse_args()
 
@@ -286,7 +286,7 @@ if __name__ == "__main__":
         pitch_bias=args.pitch_bias,
         control_freq=args.control_freq,
         command_freq=args.command_freq,
-        cutoff_frequency=args.cutoff_frequency
+        cutoff_frequency=args.cutoff_frequency,
         action_scale=args.action_scale,
         gait_freq=args.gait_freq,
         max_motor_speed=args.max_motor_speed,
