@@ -42,15 +42,16 @@ class RLWalk:
         command_freq: float = 20, # 20 Hz
         action_scale: float = 0.3,
         gait_freq: float = 1.0,
-        max_motor_speed: float = 4.0,
+        max_motor_speed: float = 4.82,
         vel_range_x: float = [-0.6, 0.6],
         vel_range_y: float = [-0.6, 0.6],
         vel_range_rot: float = [-1.0, 1.0],
-        cutoff_frequency=None, # or 40Hz
+        cutoff_frequency=40, # or 40Hz
     ):
         # Init Model 
         self.model_path = onnx_model_path
         self.policy = OnnxInfer(self.model_path)
+        print("Policy Model Loaded !")
 
         # Init action scale
         self._action_scale = action_scale
@@ -70,10 +71,6 @@ class RLWalk:
         self._default_angles_head_list = [0.5306, -0.5306]
         self._default_angles_full_list = self._default_angles_leg_list + self._default_angles_head_list
         
-        # Init position and velocity
-        self.current_qpos = self._default_angles_full_list.copy()
-        self.current_qvel = [0.0] * len(self._default_angles_full_list)
-
         # Action memory
         self._last_action = np.zeros_like(self._default_angles_leg, dtype=np.float32)
         self._last_last_action = np.zeros_like(self._default_angles_leg, dtype=np.float32)
@@ -107,7 +104,6 @@ class RLWalk:
         self.last_command = [0.0, 0.0, 0.0]
         self.last_head_tilt = 0.0
         # Init command logic
-        self.ENABLE = False
         self.PAUSED = False
 
         # Init low pass filter
@@ -140,14 +136,14 @@ class RLWalk:
         )
 
     def start_robot(self):
+        print("START BD-5...")
         # enable torque
         self.servo.enable_torque()
-        time.sleep(2)
         # set default angles
         self.servo.set_position(self._default_angles_full_list)
-        time.sleep(2)
     
     def stop_robot(self):
+        print("STOP BD-5...")
         # disable torque
         self.servo.disable_torque()
         time.sleep(2)
@@ -158,7 +154,7 @@ class RLWalk:
         # get Dynamixel data 
         dxl_qpos, success = self.servo.get_position()
         dxl_qvel, success = self.servo.get_velocity()
-        if len(current_qpos) > 0 or len(current_qvel) > 0:
+        if len(dxl_qpos) == 0 or len(dxl_qvel) == 0:
             return None
         current_qpos = np.array(dxl_qpos[:2])
         current_qvel = np.array(dxl_qvel[:2])
@@ -183,6 +179,14 @@ class RLWalk:
         return obs.astype(np.float32)
     
     def run(self):
+        # TODO : Wait for joystick connection
+        # Wait to start the BD-5
+        while True:
+            self.last_command, head_tilt, S_pressed, T_pressed, C_pressed, X_pressed = self.joystick.get_last_command()
+            if C_pressed == True:
+                break
+        self.start_robot()
+        # Start main loop
         i = 0
         try:
             print("Starting")
@@ -194,66 +198,58 @@ class RLWalk:
                 # get head tilt command 
                 self.smooth_neck = self.tau_neck * head_tilt + (1 - self.tau_neck) * self.smooth_neck
                 controlled_neck = [self._default_angles_head[0], self._default_angles_head[1] + self.smooth_neck]
-                # Activate the robot when pressed on circle 
-                if C_pressed == True and self.ENABLE == False:
-                    self.ENABLE = True
-                    self.PAUSED = False
-                    self.start_robot()
                 # Kill-switch exit program
                 if X_pressed == True:
                     self.ENABLE = False
                     self.stop_robot()
                     break
                 # Pause inference/action process 
-                if S_pressed == True:
-                    self.PAUSED = True
-                    self.ENABLE = False
-                # loop over inference/action process
-                if self.PAUSED == True:
-                    time.sleep(0.1)
+                if T_pressed == True:
+                    self.PAUSED = not self.PAUSED
+                    if self.PAUSED:
+                        print("PAUSE")
+                    else:
+                        print("UNPAUSE")
+                if self.PAUSED:
+                    time.sleep(0.01)
                     continue
-                # main loop
-                if self.ENABLE == True:
-                    # get observation 
-                    obs = self.get_obs()
-                    if obs is None:
-                        print("No observation")
-                        continue
-                    onnx_input = {"obs": obs.reshape(1, -1)}
-                    # Policy inference 
-                    onnx_pred = self.policy(onnx_input)
-                    # update action memory
-                    self._last_last_last_action = self._last_last_action.copy()
-                    self._last_last_action = self._last_action.copy()
-                    self._last_action = onnx_pred.copy()
-                    # update motor targets -> in real case self._ctrl_dt = self._n_substeps * self._sim_dt
-                    self.motor_targets = onnx_pred * self._action_scale + self._default_angles_leg
-                    self.motor_targets = np.clip(self.motor_targets, 
-                                                self.prev_motor_targets - self.max_motor_speed * (self._ctrl_dt),
-                                                self.prev_motor_targets + self.max_motor_speed * (self._ctrl_dt)
-                                                )
-                    # get action filtered 
-                    if self.action_filter is not None:
-                        self.action_filter.push(self.motor_targets)
-                        filtered_motor_targets = self.action_filter.get_filtered_action()
-                        if (time.time() - start_t > 1):  # give time to the filter to stabilize
-                            self.motor_targets = filtered_motor_targets
-                    # update previous motor targets
-                    self.prev_motor_targets = self.motor_targets.copy()
-                    # send motor target to servos 
-                    target_position = list(self.motor_targets) + controlled_neck 
-                    self.servo.set_position(value=target_position)
-                    # time control 
-                    i+=1
-                    took = time.time() - t
-                    if (1 / self.control_freq - took) < 0:
-                        print(
-                            "Policy control budget exceeded by",
-                            np.around(took - 1 / self.control_freq, 3),
-                        )
-                    time.sleep(max(0, 1 / self.control_freq - took))
-                else:
+                # get observation 
+                obs = self.get_obs()
+                if obs is None:
+                    print("No observation")
                     continue
-
+                onnx_input = {"obs": obs.reshape(1, -1)}
+                # Policy inference 
+                onnx_pred = self.policy(onnx_input)
+                # update action memory
+                self._last_last_last_action = self._last_last_action.copy()
+                self._last_last_action = self._last_action.copy()
+                self._last_action = onnx_pred.copy()
+                # update motor targets -> in real case self._ctrl_dt = self._n_substeps * self._sim_dt
+                self.motor_targets = onnx_pred * self._action_scale + self._default_angles_leg
+                self.motor_targets = np.clip(self.motor_targets, 
+                                            self.prev_motor_targets - self.max_motor_speed * (self._ctrl_dt),
+                                            self.prev_motor_targets + self.max_motor_speed * (self._ctrl_dt)
+                                            )
+                # get action filtered 
+                if self.action_filter is not None:
+                    self.action_filter.push(self.motor_targets)
+                    filtered_motor_targets = self.action_filter.get_filtered_action()
+                    if (time.time() - start_t > 1):  # give time to the filter to stabilize
+                        self.motor_targets = filtered_motor_targets
+                # update previous motor targets
+                self.prev_motor_targets = self.motor_targets.copy()
+                # send motor target to servos 
+                target_position = list(self.motor_targets) + controlled_neck 
+                self.servo.set_position(value=target_position)
+                # time control 
+                i+=1
+                took = time.time() - t
+                if (1 / self.control_freq - took) < 0:
+                    print(
+                        "Policy control budget exceeded by",
+                        np.around(took - 1 / self.control_freq, 3),
+                    )
+                time.sleep(max(0, 1 / self.control_freq - took))
         except KeyboardInterrupt:
             pass
