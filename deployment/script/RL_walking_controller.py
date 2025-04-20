@@ -141,6 +141,8 @@ class BD5RLController:
         self.servo.enable_torque()
         # set default angles
         self.servo.set_position(self._default_angles_full_list)
+        time.sleep(2)
+        print("BD-5 ready !")
     
     def stop_robot(self):
         print("STOP BD-5...")
