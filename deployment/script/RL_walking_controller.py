@@ -227,7 +227,7 @@ class BD5RLController:
                     continue
                 onnx_input = {"obs": obs.reshape(1, -1)}
                 # Policy inference 
-                onnx_pred = self.policy(onnx_input)
+                onnx_pred = self.policy.infer(onnx_input)
                 # update action memory
                 self._last_last_last_action = self._last_last_action.copy()
                 self._last_last_action = self._last_action.copy()
