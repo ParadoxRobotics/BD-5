@@ -43,7 +43,7 @@ class BD5RLController:
         cutoff_frequency: float = 10, # or 40Hz
         action_scale: float = 0.3,
         gait_freq: float = 1.0,
-        max_motor_speed: float = 4.82,
+        max_motor_speed: float = 3.90,
         vel_range_x: float = [-0.6, 0.6],
         vel_range_y: float = [-0.6, 0.6],
         vel_range_rot: float = [-1.0, 1.0],
@@ -277,8 +277,8 @@ if __name__ == "__main__":
     parser.add_argument("--pitch_bias", type=float, default=0, help="deg")
     parser.add_argument("--gait_freq", type=float, default=1.0)
     parser.add_argument("--max_motor_speed", type=float, default=4.82)
-    parser.add_argument("--vel_range_x", type=float, nargs=2, default=[-0.6, 0.6])
-    parser.add_argument("--vel_range_y", type=float, nargs=2, default=[-0.6, 0.6])
+    parser.add_argument("--vel_range_x", type=float, nargs=2, default=[-0.4, 0.4])
+    parser.add_argument("--vel_range_y", type=float, nargs=2, default=[-0.2, 0.2])
     parser.add_argument("--vel_range_rot", type=float, nargs=2, default=[-1.0, 1.0])
     parser.add_argument("--DXL_port", type=str, default="/dev/ttyUSB0")
     parser.add_argument("--DXL_Baudrate", type=int, default=1000000)
