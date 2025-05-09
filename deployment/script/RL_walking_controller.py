@@ -40,10 +40,10 @@ class BD5RLController:
         pitch_bias: float = 0,
         control_freq: float = 50, # 50 Hz
         command_freq: float = 20, # 20 Hz
-        cutoff_frequency: float = 10, # or 40Hz
+        cutoff_frequency: float = None, # or 40Hz
         action_scale: float = 0.3,
         gait_freq: float = 1.0,
-        max_motor_speed: float = 3.90,
+        max_motor_speed: float = 4.82,
         vel_range_x: float = [-0.4, 0.4],
         vel_range_y: float = [-0.2, 0.2],
         vel_range_rot: float = [-1.0, 1.0],
@@ -175,7 +175,6 @@ class BD5RLController:
         obs = np.hstack([
             imu_data["gyro"],
             imu_data["accelerometer"],
-            imu_data["gravity"],
             self.last_command,
             joint_angles,
             joint_velocities,
@@ -235,10 +234,11 @@ class BD5RLController:
                 self._last_action = onnx_pred.copy()
                 # update motor targets
                 self.motor_targets = onnx_pred * self._action_scale + self._default_angles_leg
-                self.motor_targets = np.clip(self.motor_targets, 
-                                            self.prev_motor_targets - self.max_motor_speed * (self._ctrl_dt),
-                                            self.prev_motor_targets + self.max_motor_speed * (self._ctrl_dt)
-                                            )
+                if self.max_motor_speed is not None:
+                    self.motor_targets = np.clip(self.motor_targets, 
+                                                self.prev_motor_targets - self.max_motor_speed * (self._ctrl_dt),
+                                                self.prev_motor_targets + self.max_motor_speed * (self._ctrl_dt)
+                                                )
                 # get action filtered 
                 if self.action_filter is not None:
                     self.action_filter.push(self.motor_targets)
@@ -275,10 +275,10 @@ if __name__ == "__main__":
     parser.add_argument("--control_freq", type=int, default=50)
     parser.add_argument("--command_freq", type=int, default=20)
     parser.add_argument("--pitch_bias", type=float, default=0, help="deg")
-    parser.add_argument("--gait_freq", type=float, default=0.8)
-    parser.add_argument("--max_motor_speed", type=float, default=3.50)
-    parser.add_argument("--vel_range_x", type=float, nargs=2, default=[-0.4, 0.4])
-    parser.add_argument("--vel_range_y", type=float, nargs=2, default=[-0.2, 0.2])
+    parser.add_argument("--gait_freq", type=float, default=1.0)
+    parser.add_argument("--max_motor_speed", type=float, default=None)
+    parser.add_argument("--vel_range_x", type=float, nargs=2, default=[-0.6, 0.6])
+    parser.add_argument("--vel_range_y", type=float, nargs=2, default=[-0.4, 0.4])
     parser.add_argument("--vel_range_rot", type=float, nargs=2, default=[-1.0, 1.0])
     parser.add_argument("--DXL_port", type=str, default="/dev/ttyUSB0")
     parser.add_argument("--DXL_Baudrate", type=int, default=1000000)

@@ -4,7 +4,6 @@ from adafruit_bno08x.i2c import BNO08X_I2C
 from adafruit_bno08x import (
     BNO_REPORT_ACCELEROMETER,
     BNO_REPORT_GYROSCOPE,
-    BNO_REPORT_ROTATION_VECTOR,
 )
 
 from scipy.spatial.transform import Rotation as R
@@ -28,8 +27,6 @@ class IMU:
         # Enable Gyroscope and Accelerometer
         self.imu.enable_feature(BNO_REPORT_ACCELEROMETER)
         self.imu.enable_feature(BNO_REPORT_GYROSCOPE)
-        self.imu.enable_feature(BNO_REPORT_ROTATION_VECTOR)
-        self.transform_imu = np.array([0, 0, -1])
         self.pitch_bias = self.nominal_pitch_bias + self.user_pitch_bias
 
         # IMU calibration 
@@ -55,7 +52,6 @@ class IMU:
         self.last_imu_data = {
             "gyro": [0, 0, 0],
             "accelerometer": [0, 0, 0],
-            "gravity": [0, 0, 0],
         }
         self.imu_queue = Queue(maxsize=1)
         Thread(target=self.imu_worker, daemon=True).start()
@@ -67,25 +63,26 @@ class IMU:
                 # get data 
                 gyro = np.array(self.imu.gyro).copy()
                 accelerometer = np.array(self.imu.acceleration).copy()
+                """
                 quat = np.array(self.imu.quaternion).copy()
                 imu_rot = R.from_quat(quat)
                 imu_rot_inv = imu_rot.inv()
                 gravity = imu_rot_inv.apply(self.transform_imu)
+                """
                  
             except Exception as e:
                 print("[IMU]:", e)
                 continue
 
-            if gyro is None or accelerometer is None or quat is None:
+            if gyro is None or accelerometer is None:
                 continue
 
-            if gyro.any() is None or accelerometer.any() is None or quat.any() is None:
+            if gyro.any() is None or accelerometer.any() is None:
                 continue
 
             data = {
                 "gyro": gyro,
                 "accelerometer": accelerometer,
-                "gravity": gravity,
             }
 
             self.imu_queue.put(data)
@@ -107,6 +104,5 @@ if __name__ == "__main__":
         data = imu.get_data()
         print("gyro", np.around(data["gyro"], 3))
         print("accelerometer", np.around(data["accelerometer"], 3))
-        print("gravity", np.around(data["gravity"], 3))
         print("---")
         time.sleep(1 / 25)
