@@ -180,6 +180,7 @@ class BD5RLController:
         obs = np.hstack([
             imu_data["gyro"],
             imu_data["accelerometer"],
+            imu_data["gravity"],
             self.last_command,
             joint_angles,
             joint_velocities,
