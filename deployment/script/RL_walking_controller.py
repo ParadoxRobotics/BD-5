@@ -241,9 +241,10 @@ class BD5RLController:
                 # update motor targets
                 self.motor_targets = onnx_pred * self._action_scale + self._default_angles_leg
                 # filter the motor output 
-                filter_state = 0.8 * self.prev_filter_state + 0.2 * self.motor_targets
-                self.prev_filter_state = filter_state
-                self.motor_targets = filter_state
+                if self.exp_filter:
+                    filter_state = 0.8 * self.prev_filter_state + 0.2 * self.motor_targets
+                    self.prev_filter_state = filter_state.copy()
+                    self.motor_targets = filter_state
                 # clip motor speed 
                 if self.max_motor_speed is not None:
                     self.motor_targets = np.clip(self.motor_targets, 
