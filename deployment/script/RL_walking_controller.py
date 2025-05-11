@@ -40,6 +40,7 @@ class BD5RLController:
         pitch_bias: float = 0,
         control_freq: float = 50, # 50 Hz
         command_freq: float = 20, # 20 Hz
+        exponential_filter: bool = True,
         cutoff_frequency: float = None, # or 40Hz
         action_scale: float = 0.3,
         gait_freq: float = 1.0,
@@ -111,6 +112,10 @@ class BD5RLController:
         self.action_filter = None
         if cutoff_frequency is not None:
             self.action_filter = LowPassActionFilter(self.control_freq, cutoff_frequency)
+
+        # Exponential filter 
+        self.exp_filter = exponential_filter
+        self.prev_filter_state = np.zeros_like(self._default_angles_leg)
 
         # Init Servo Controller
         self.portHandler = PortHandler(DXL_port)
@@ -234,6 +239,11 @@ class BD5RLController:
                 self._last_action = onnx_pred.copy()
                 # update motor targets
                 self.motor_targets = onnx_pred * self._action_scale + self._default_angles_leg
+                # filter the motor output 
+                filter_state = 0.8 * self.prev_filter_state + 0.2 * self.motor_targets
+                self.prev_filter_state = filter_state
+                self.motor_targets = filter_state
+                # clip motor speed 
                 if self.max_motor_speed is not None:
                     self.motor_targets = np.clip(self.motor_targets, 
                                                 self.prev_motor_targets - self.max_motor_speed * (self._ctrl_dt),
@@ -276,13 +286,14 @@ if __name__ == "__main__":
     parser.add_argument("--command_freq", type=int, default=20)
     parser.add_argument("--pitch_bias", type=float, default=0, help="deg")
     parser.add_argument("--gait_freq", type=float, default=1.0)
-    parser.add_argument("--max_motor_speed", type=float, default=None)
+    parser.add_argument("--max_motor_speed", type=float, default=4.50)
     parser.add_argument("--vel_range_x", type=float, nargs=2, default=[-0.6, 0.6])
     parser.add_argument("--vel_range_y", type=float, nargs=2, default=[-0.4, 0.4])
     parser.add_argument("--vel_range_rot", type=float, nargs=2, default=[-1.0, 1.0])
     parser.add_argument("--DXL_port", type=str, default="/dev/ttyUSB0")
     parser.add_argument("--DXL_Baudrate", type=int, default=1000000)
     parser.add_argument("--cutoff_frequency", type=float, default=None)
+    parser.add_argument("--exponential_filter", type=bool, default=False)
 
     args = parser.parse_args()
 
@@ -293,6 +304,7 @@ if __name__ == "__main__":
         pitch_bias=args.pitch_bias,
         control_freq=args.control_freq,
         command_freq=args.command_freq,
+        exponential_filter=args.exponential_filter,
         cutoff_frequency=args.cutoff_frequency,
         action_scale=args.action_scale,
         gait_freq=args.gait_freq,
