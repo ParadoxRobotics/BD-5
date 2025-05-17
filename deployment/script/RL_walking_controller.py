@@ -40,7 +40,7 @@ class BD5RLController:
         pitch_bias: float = 0,
         control_freq: float = 50, # 50 Hz
         command_freq: float = 20, # 20 Hz
-        exponential_filter: bool = True,
+        exponential_filter: bool = False,
         cutoff_frequency: float = None, # or 40Hz
         action_scale: float = 0.3,
         gait_freq: float = 1.0,
