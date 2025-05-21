@@ -196,7 +196,8 @@ class BD5RLController:
         ])
         # record state if needed
         if self.record:
-            self.state_data.append(obs)
+            if obs is not None:
+                self.state_data.append(obs)
         return obs.astype(np.float32)
     
     def run(self):
