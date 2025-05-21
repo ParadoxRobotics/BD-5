@@ -287,7 +287,8 @@ class BD5RLController:
             print("Port closed !")
             if self.record:
                 self.state_data = np.array(self.state_data)
-                np.save("bd5_state.npy", self.state_data)
+                np.save("/home/robot/BD-5/bd5_state.npy", self.state_data)
+                print("state recorded !")
             pass
 
 if __name__ == "__main__":
