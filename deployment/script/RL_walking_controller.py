@@ -147,8 +147,10 @@ class BD5RLController:
         self.imu = IMU(sampling_freq=self.control_freq, user_pitch_bias=self.pitch_bias, calibrate=False)
 
         # state recorder 
-        self.record = True
-        self.state_data = []
+        self.record = record
+        if self.record:
+            print("start recording data !")
+            self.state_data = []
 
     def start_robot(self):
         print("START BD-5...")
@@ -197,6 +199,7 @@ class BD5RLController:
         # record state if needed
         if self.record:
             if obs is not None:
+                print("plop")
                 self.state_data.append(obs)
         return obs.astype(np.float32)
     
