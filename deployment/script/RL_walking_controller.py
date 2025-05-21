@@ -199,7 +199,6 @@ class BD5RLController:
         # record state if needed
         if self.record:
             if obs is not None:
-                print("plop")
                 self.state_data.append(obs)
         return obs.astype(np.float32)
     
@@ -288,11 +287,11 @@ class BD5RLController:
             self.stop_robot()
             self.portHandler.closePort()
             print("Port closed !")
-            if self.record:
-                self.state_data = np.array(self.state_data)
-                np.save("/home/robot/BD-5/bd5_state.npy", self.state_data)
-                print("state recorded !")
             pass
+        if self.record:
+            self.state_data = np.array(self.state_data)
+            np.save("/home/robot/BD-5/bd5_state.npy", self.state_data)
+            print("state recorded !")
 
 if __name__ == "__main__":
     import argparse
