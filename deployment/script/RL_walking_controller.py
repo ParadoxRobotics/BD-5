@@ -115,7 +115,7 @@ class BD5RLController:
 
         # Exponential filter 
         self.exp_filter = exponential_filter
-        self.prev_filter_state = np.zeros_like(self._default_angles_leg)
+        self.prev_filter_state = self._default_angles_leg.copy()
 
         # Init Servo Controller
         self.portHandler = PortHandler(DXL_port)
