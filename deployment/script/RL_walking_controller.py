@@ -48,6 +48,7 @@ class BD5RLController:
         vel_range_x: float = [-0.4, 0.4],
         vel_range_y: float = [-0.2, 0.2],
         vel_range_rot: float = [-1.0, 1.0],
+        record: bool = False,
         
     ):
         # Init Model 
@@ -145,6 +146,10 @@ class BD5RLController:
         self.pitch_bias = pitch_bias
         self.imu = IMU(sampling_freq=self.control_freq, user_pitch_bias=self.pitch_bias, calibrate=False)
 
+        # state recorder 
+        self.record = True
+        self.state_data = []
+
     def start_robot(self):
         print("START BD-5...")
         # enable torque
@@ -189,6 +194,9 @@ class BD5RLController:
             self._last_last_last_action,
             phase,
         ])
+        # record state if needed
+        if self.record:
+            self.state_data.append(obs)
         return obs.astype(np.float32)
     
     def run(self):
@@ -276,6 +284,9 @@ class BD5RLController:
             self.stop_robot()
             self.portHandler.closePort()
             print("Port closed !")
+            if self.record:
+                self.state_data = np.array(self.state_data)
+                np.save("bd5_state.npy", self.state_data)
             pass
 
 if __name__ == "__main__":
@@ -296,6 +307,7 @@ if __name__ == "__main__":
     parser.add_argument("--DXL_Baudrate", type=int, default=1000000)
     parser.add_argument("--cutoff_frequency", type=float, default=None)
     parser.add_argument("--exponential_filter", type=bool, default=False)
+    parser.add_argument("--record", type=bool, default=False)
 
     args = parser.parse_args()
 
@@ -314,6 +326,7 @@ if __name__ == "__main__":
         vel_range_x=args.vel_range_x,
         vel_range_y=args.vel_range_y,
         vel_range_rot=args.vel_range_rot,
+        record=args.record,
     )
 
     print("BD-5 RL Controller initialized !")
