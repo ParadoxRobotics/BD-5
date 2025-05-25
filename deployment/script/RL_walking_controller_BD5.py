@@ -9,6 +9,10 @@ from CTRL.IMU import IMU
 from CTRL.ONNX_infer import OnnxInfer
 from CTRL.Gamepad import Gamepad
 
+import cProfile, pstats, io
+
+pr = cProfile.Profile()
+
 class LowPassActionFilter:
     def __init__(self, control_freq, cutoff_frequency=40.0):
         self.last_action = 0
@@ -209,7 +213,11 @@ class BD5RLController:
         try:
             print("Starting")
             start_t = time.time()
+
+            pr.enable()
+
             while True:
+                pr.enable()
                 t = time.time()
                 # get command from joystick
                 self.last_command, head_tilt, S_pressed, T_pressed, C_pressed, X_pressed = self.joystick.get_last_command()
@@ -275,6 +283,18 @@ class BD5RLController:
                         np.around(took - 1 / self.control_freq, 3),
                     )
                 time.sleep(max(0, 1 / self.control_freq - took))
+
+
+                if i % 100 == 0 and i > 0:
+                    pr.disable()
+                    s = io.StringIO()
+                    sortby = pstats.SortKey.CUMULATIVE # or .TIME
+                    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+                    ps.print_stats(20) # Print top 20 time-consuming functions
+                    print(s.getvalue())
+                    pr.clear() # Clear for the next profiling interval if needed
+
+
         except KeyboardInterrupt:
             print("KeyboardInterrupt detected !")
             self.stop_robot()
