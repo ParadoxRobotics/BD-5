@@ -42,10 +42,10 @@ class BD5RLController:
         command_freq: float = 20, # 20 Hz
         exponential_filter: bool = False,
         cutoff_frequency: float = None, # or 40Hz
+        history_len: int = 5,
         action_scale: float = 0.3,
-        gait_freq: float = 1.0,
         max_motor_speed: float = 4.82,
-        pid: float = [800, 0, 0],
+        pid: float = None,
         vel_range_x: float = [-0.4, 0.4],
         vel_range_y: float = [-0.2, 0.2],
         vel_range_rot: float = [-1.0, 1.0],
@@ -77,8 +77,8 @@ class BD5RLController:
         
         # Action memory
         self._last_action = np.zeros_like(self._default_angles_leg, dtype=np.float32)
-        self._last_last_action = np.zeros_like(self._default_angles_leg, dtype=np.float32)
-        self._last_last_last_action = np.zeros_like(self._default_angles_leg, dtype=np.float32)
+        # Observation memory
+        self.obs_history = np.zeros(32 * history_len)
 
         # Init motor targets
         self.max_motor_speed = max_motor_speed
@@ -91,11 +91,6 @@ class BD5RLController:
         self.smooth_neck = 0.0
         self.tau_neck = 0.4
 
-        # Phase init -> in real case self._ctrl_dt = self._n_substeps * self._sim_dt
-        self._phase = np.array([0.0, np.pi])
-        self._gait_freq = gait_freq
-        self._phase_dt = 2 * np.pi * self._gait_freq * self._ctrl_dt 
-
         # Init joystick
         self.command_freq = command_freq
         self.joystick = Gamepad(command_freq=self.command_freq, 
@@ -103,7 +98,7 @@ class BD5RLController:
                                 vel_range_y=vel_range_y, 
                                 vel_range_rot=vel_range_rot, 
                                 head_range=[-0.5236, 0.5236], 
-                                deadzone=0.05)
+                                deadzone=0.09)
         
         # Init command from joystick
         self.last_command = [0.0, 0.0, 0.0]
@@ -144,7 +139,8 @@ class BD5RLController:
             raise Exception("Error in servos ID or state !")   
         
         # set dynamixel PID value 
-        self.servo.set_PID(pid=pid)
+        if pid is not None:
+            self.servo.set_PID(pid=pid)
 
         # Init IMU
         self.pitch_bias = pitch_bias
@@ -176,17 +172,11 @@ class BD5RLController:
         imu_data = self.imu.get_data()
         # get Dynamixel data 
         dxl_qpos, success_pos = self.servo.get_position(full=False) # Only recover the state of the legs
-        dxl_qvel, success_vel = self.servo.get_velocity(full=False) # Only recover the state of the legs
-        if not success_pos or not success_vel or len(dxl_qpos) == 0 or len(dxl_qvel) == 0:
+        if not success_pos or len(dxl_qpos) == 0:
             return None
         current_qpos = np.array(dxl_qpos) # Only recover the state of the legs
-        current_qvel = np.array(dxl_qvel) # Only recover the state of the legs
         # get joint angles delta and velocities
         joint_angles = current_qpos - self._default_angles_leg
-        joint_velocities = current_qvel
-        # adjust phase
-        ph = self._phase if np.linalg.norm(self.last_command) >= 0.01 else np.ones(2) * np.pi
-        phase = np.concatenate([np.cos(ph), np.sin(ph)])
         # concatenate all
         obs = np.hstack([
             imu_data["gyro"],
@@ -194,17 +184,18 @@ class BD5RLController:
             imu_data["gravity"],
             self.last_command,
             joint_angles,
-            joint_velocities,
             self._last_action,
-            self._last_last_action,
-            self._last_last_last_action,
-            phase,
         ])
+        # update history memory
+        state_size = obs.shape[0]
+        # fill the buffer
+        self.obs_history = np.roll(self.obs_history, state_size)
+        self.obs_history[:state_size] = obs
         # record state if needed
         if self.record:
             if obs is not None:
-                self.state_data.append(obs)
-        return obs.astype(np.float32)
+                self.state_data.append(self.obs_history)
+        return self.obs_history.astype(np.float32)
     
     def run(self):
         # Wait to start the BD-5
@@ -250,8 +241,6 @@ class BD5RLController:
                 # Policy inference 
                 onnx_pred = self.policy.infer(onnx_input)
                 # update action memory
-                self._last_last_last_action = self._last_last_action.copy()
-                self._last_last_action = self._last_action.copy()
                 self._last_action = onnx_pred.copy()
                 # update motor targets
                 self.motor_targets = onnx_pred * self._action_scale + self._default_angles_leg
@@ -260,18 +249,18 @@ class BD5RLController:
                     filter_state = 0.8 * self.prev_filter_state + 0.2 * self.motor_targets
                     self.prev_filter_state = filter_state.copy()
                     self.motor_targets = filter_state
-                # clip motor speed 
-                if self.max_motor_speed is not None:
-                    self.motor_targets = np.clip(self.motor_targets, 
-                                                self.prev_motor_targets - self.max_motor_speed * (self._ctrl_dt),
-                                                self.prev_motor_targets + self.max_motor_speed * (self._ctrl_dt)
-                                                )
                 # get action filtered 
                 if self.action_filter is not None:
                     self.action_filter.push(self.motor_targets)
                     filtered_motor_targets = self.action_filter.get_filtered_action()
                     if (time.time() - start_t > 1):  # give time to the filter to stabilize
                         self.motor_targets = filtered_motor_targets
+                # clip motor speed 
+                if self.max_motor_speed is not None:
+                    self.motor_targets = np.clip(self.motor_targets, 
+                                                self.prev_motor_targets - self.max_motor_speed * (self._ctrl_dt),
+                                                self.prev_motor_targets + self.max_motor_speed * (self._ctrl_dt)
+                                                )
                 # update previous motor targets
                 self.prev_motor_targets = self.motor_targets.copy()
                 # send motor target to servos 
@@ -306,12 +295,12 @@ if __name__ == "__main__":
     parser.add_argument("--control_freq", type=int, default=50)
     parser.add_argument("--command_freq", type=int, default=20)
     parser.add_argument("--pitch_bias", type=float, default=0, help="deg")
-    parser.add_argument("--gait_freq", type=float, default=1.0)
     parser.add_argument("--max_motor_speed", type=float, default=4.50)
-    parser.add_argument("--pid", type=float, default=[800, 0, 0])
-    parser.add_argument("--vel_range_x", type=float, nargs=2, default=[-0.6, 0.6])
+    parser.add_argument("--history_len", type=int, default=5)
+    parser.add_argument("--pid", type=float, default=None)
+    parser.add_argument("--vel_range_x", type=float, nargs=2, default=[-0.8, 0.8])
     parser.add_argument("--vel_range_y", type=float, nargs=2, default=[-0.4, 0.4])
-    parser.add_argument("--vel_range_rot", type=float, nargs=2, default=[-1.0, 1.0])
+    parser.add_argument("--vel_range_rot", type=float, nargs=2, default=[-0.8, 0.8])
     parser.add_argument("--DXL_port", type=str, default="/dev/ttyUSB0")
     parser.add_argument("--DXL_Baudrate", type=int, default=1000000)
     parser.add_argument("--cutoff_frequency", type=float, default=None)
@@ -329,8 +318,8 @@ if __name__ == "__main__":
         command_freq=args.command_freq,
         exponential_filter=args.exponential_filter,
         cutoff_frequency=args.cutoff_frequency,
+        history_len=args.history_len,
         action_scale=args.action_scale,
-        gait_freq=args.gait_freq,
         max_motor_speed=args.max_motor_speed,
         vel_range_x=args.vel_range_x,
         vel_range_y=args.vel_range_y,
