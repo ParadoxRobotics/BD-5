@@ -11,7 +11,7 @@ from CTRL.Gamepad import Gamepad
 
 import cProfile, pstats, io
 
-pr = cProfile.Profile()
+#pr = cProfile.Profile()
 
 class LowPassActionFilter:
     def __init__(self, control_freq, cutoff_frequency=40.0):
@@ -214,7 +214,7 @@ class BD5RLController:
             print("Starting")
             start_t = time.time()
 
-            pr.enable()
+            #pr.enable()
 
             while True:
                 pr.enable()
@@ -284,7 +284,7 @@ class BD5RLController:
                     )
                 time.sleep(max(0, 1 / self.control_freq - took))
 
-
+                """
                 if i % 100 == 0 and i > 0:
                     pr.disable()
                     s = io.StringIO()
@@ -293,6 +293,7 @@ class BD5RLController:
                     ps.print_stats(20) # Print top 20 time-consuming functions
                     print(s.getvalue())
                     pr.clear() # Clear for the next profiling interval if needed
+                """
 
 
         except KeyboardInterrupt:
