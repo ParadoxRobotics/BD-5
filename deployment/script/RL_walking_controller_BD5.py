@@ -141,7 +141,7 @@ class BD5RLController:
         # set dynamixel PID value 
         if pid is not None and (isinstance(pid, list)) :
             if len(pid) == 3:
-                pid = map(int, pid)
+                pid = list(map(int, pid))
                 print(pid)
                 print("setting PID value to the servos !")
                 self.servo.set_PID(pid=pid)
