@@ -416,7 +416,9 @@ if __name__=='__main__':
     BDX.enable_torque()
     BDX.set_position(default_angles_full)
 
+    
     try:
+        """
         i = 0
         while True:
             t = time.time()
@@ -464,6 +466,28 @@ if __name__=='__main__':
                     np.around(took - 1 / ctrl_freq, 3),
                 )
             time.sleep(max(0, 1 / ctrl_freq - took))
+        """
+        delta_val = 0.0174533
+        time.sleep(10)
+        for i in range(10):
+            # +10 °
+            pos = default_angles_full.copy()
+            pos[i] = pos[i] + delta_val
+            BDX.set_position(pos)
+            time.sleep(10)
+            # -10 °
+            pos = default_angles_full.copy()
+            pos[i] = pos[i] - delta_val
+            BDX.set_position(pos)
+            time.sleep(10)
+            # 0
+            BDX.set_position(default_angles_full)
+            time.sleep(10)
+
+        BDX.disable_torque()
+        portHandler.closePort()
+        print("Port closed !")
+        exit()
 
     except KeyboardInterrupt:
         print("KeyboardInterrupt detected !")
