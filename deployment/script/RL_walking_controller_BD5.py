@@ -139,9 +139,10 @@ class BD5RLController:
             raise Exception("Error in servos ID or state !")   
         
         # set dynamixel PID value 
-        if pid is not None:
-            print("setting PID value to the servos !")
-            self.servo.set_PID(pid=pid)
+        if pid is not None and (isinstance(pid, list)) :
+            if len(pid) == 3:
+                print("setting PID value to the servos !")
+                self.servo.set_PID(pid=pid)
 
         # Init IMU
         self.pitch_bias = pitch_bias
