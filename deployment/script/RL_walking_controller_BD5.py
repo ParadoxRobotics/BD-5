@@ -217,7 +217,6 @@ class BD5RLController:
             #pr.enable()
 
             while True:
-                pr.enable()
                 t = time.time()
                 # get command from joystick
                 self.last_command, head_tilt, S_pressed, T_pressed, C_pressed, X_pressed = self.joystick.get_last_command()
