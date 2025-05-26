@@ -467,22 +467,22 @@ if __name__=='__main__':
                 )
             time.sleep(max(0, 1 / ctrl_freq - took))
         """
-        delta_val = 0.0174533
+        delta_val = 0.349066
         time.sleep(10)
         for i in range(10):
             # +10 °
             pos = default_angles_full.copy()
             pos[i] = pos[i] + delta_val
             BDX.set_position(pos)
-            time.sleep(10)
+            time.sleep(5)
             # -10 °
             pos = default_angles_full.copy()
             pos[i] = pos[i] - delta_val
             BDX.set_position(pos)
-            time.sleep(10)
+            time.sleep(5)
             # 0
             BDX.set_position(default_angles_full)
-            time.sleep(10)
+            time.sleep(5)
 
         BDX.disable_torque()
         portHandler.closePort()
