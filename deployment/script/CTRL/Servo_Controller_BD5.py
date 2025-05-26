@@ -448,7 +448,8 @@ if __name__=='__main__':
             # read position 
             pos, state = BDX.get_position(full=False)
             # vel, state = BDX.get_velocity(full=False)
-            if len(pos) > 0 or len(vel) > 0:
+            #if len(pos) > 0 or len(vel) > 0:
+            if len(pos) > 0:
                 print("Position =", pos, len(pos))
                 #print("Angular velocity =", vel, len(vel))
             else:
