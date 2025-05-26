@@ -447,10 +447,10 @@ if __name__=='__main__':
             BDX.set_position(default_angles_leg + controlled_head)
             # read position 
             pos, state = BDX.get_position(full=False)
-            vel, state = BDX.get_velocity(full=False)
+            # vel, state = BDX.get_velocity(full=False)
             if len(pos) > 0 or len(vel) > 0:
                 print("Position =", pos, len(pos))
-                print("Angular velocity =", vel, len(vel))
+                #print("Angular velocity =", vel, len(vel))
             else:
                 print("No data available !")
                 continue
