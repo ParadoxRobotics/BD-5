@@ -139,6 +139,7 @@ class BD5RLController:
             raise Exception("Error in servos ID or state !")   
         
         # set dynamixel PID value 
+        print(pid)
         if pid is not None:
             print("setting PID value to the servos !")
             self.servo.set_PID(pid=pid)
