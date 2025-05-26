@@ -138,11 +138,11 @@ class BD5RLController:
             self.portHandler.closePort()
             raise Exception("Error in servos ID or state !")   
         
-        print(max_motor_speed, pid)
-        exit()
         # set dynamixel PID value 
         if pid is not None and (isinstance(pid, list)) :
             if len(pid) == 3:
+                pid = map(int, pid)
+                print(pid)
                 print("setting PID value to the servos !")
                 self.servo.set_PID(pid=pid)
 
