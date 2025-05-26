@@ -467,7 +467,7 @@ if __name__=='__main__':
                 )
             time.sleep(max(0, 1 / ctrl_freq - took))
         """
-        delta_val = 0.349066
+        delta_val = 0.261799
         time.sleep(10)
         for i in range(10):
             # +10 °
