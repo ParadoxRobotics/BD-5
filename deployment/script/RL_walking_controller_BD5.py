@@ -140,6 +140,7 @@ class BD5RLController:
         
         # set dynamixel PID value 
         if pid is not None:
+            print("setting PID value to the servos !")
             self.servo.set_PID(pid=pid)
 
         # Init IMU
@@ -298,7 +299,7 @@ if __name__ == "__main__":
     parser.add_argument("--pitch_bias", type=float, default=0, help="deg")
     parser.add_argument("--max_motor_speed", type=float, default=4.50)
     parser.add_argument("--history_len", type=int, default=5)
-    parser.add_argument("--pid", type=float, default=None)
+    parser.add_argument("--pid", type=float, default=[800, 0, 0])
     parser.add_argument("--vel_range_x", type=float, nargs=2, default=[-0.8, 0.8])
     parser.add_argument("--vel_range_y", type=float, nargs=2, default=[-0.4, 0.4])
     parser.add_argument("--vel_range_rot", type=float, nargs=2, default=[-0.8, 0.8])
