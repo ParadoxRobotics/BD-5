@@ -51,12 +51,12 @@ class ServoControllerBD5():
         # Angular correction for each joint
         self.joints_correction = {
             "left_hip_yaw": 1,
-            "left_hip_roll": 1, # -1
+            "left_hip_roll": -1,
             "left_hip_pitch": -1,
             "left_knee": -1,
             "left_ankle": 1,
             "right_hip_yaw": 1,
-            "right_hip_roll": -1, # 1
+            "right_hip_roll": 1,
             "right_hip_pitch": -1,
             "right_knee": -1,
             "right_ankle": 1,
