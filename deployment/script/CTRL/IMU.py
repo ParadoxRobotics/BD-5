@@ -66,9 +66,7 @@ class IMU:
             try:
                 # get data 
                 gyro = np.array(self.imu.gyro).copy()
-                gyro[1] = -gyro[1]
                 accelerometer = np.array(self.imu.acceleration).copy()
-                accelerometer[1] = -accelerometer[1]
                 quat = np.array(self.imu.quaternion).copy()
                 imu_rot = R.from_quat(quat)
                 imu_rot_inv = imu_rot.inv()
