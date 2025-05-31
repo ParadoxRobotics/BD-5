@@ -500,7 +500,8 @@ if __name__=='__main__':
         state_data = np.array(state_data)
         np.save("/home/robot/BD-5/bd5_state.npy", state_data)
         print("state recorded !")
-            
+
+        time.sleep(4)
 
         BDX.disable_torque()
         portHandler.closePort()
