@@ -313,7 +313,7 @@ if __name__ == "__main__":
     parser.add_argument("--control_freq", type=int, default=50)
     parser.add_argument("--command_freq", type=int, default=20)
     parser.add_argument("--pitch_bias", type=float, default=0, help="deg")
-    parser.add_argument("--max_motor_speed", type=float, default=4.50)
+    parser.add_argument("--max_motor_speed", type=float, default=4.82)
     parser.add_argument("--history_len", type=int, default=5)
     parser.add_argument("--pid", nargs='+', default=[800, 0, 0])
     parser.add_argument("--gait_freq", type=float, default=1.25)
