@@ -281,7 +281,10 @@ class BD5RLController:
                 phase_tp1 = self._phase + self._phase_dt
                 self._phase = np.fmod(phase_tp1 + np.pi, 2 * np.pi) - np.pi
                 # send motor target to servos 
-                target_position = self.motor_targets.tolist() + controlled_neck 
+                target_position = self.motor_targets.tolist() 
+                target_position[1] = -target_position[1]
+                target_position[6] = -target_position[6]
+                target_position = target_position + controlled_neck 
                 self.servo.set_position(value=target_position)
                 # time control 
                 i+=1
