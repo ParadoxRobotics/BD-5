@@ -51,12 +51,12 @@ class ServoControllerBD5():
         # Angular correction for each joint
         self.joints_correction = {
             "left_hip_yaw": 1,
-            "left_hip_roll": 1, # go back to -1
+            "left_hip_roll": -1,
             "left_hip_pitch": -1,
             "left_knee": -1,
             "left_ankle": 1,
             "right_hip_yaw": 1,
-            "right_hip_roll": -1, # got back to 1
+            "right_hip_roll": 1,
             "right_hip_pitch": -1,
             "right_knee": -1,
             "right_ankle": 1,
@@ -412,10 +412,12 @@ if __name__=='__main__':
             print("BD-5 ACTIVATE !")
             break
 
+    """
     # Activate + Set default angles
     BDX.set_PID(pid=[400, 0, 0])
     BDX.enable_torque()
     BDX.set_position(default_angles_full)
+    """
 
     
     try:
@@ -486,9 +488,18 @@ if __name__=='__main__':
             BDX.set_position(default_angles_full)
             time.sleep(5)
         """
-        for i in range(100):
+        state_data = []
+        while True:
+            last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
             pos, state = BDX.get_position(full=False)
-            print(pos)
+            state_data.append(pos)
+            if X_pressed == True:
+                print("Kill switch pressed !")
+                break
+        state_data = np.array(state_data)
+        np.save("/home/robot/BD-5/bd5_state.npy", state_data)
+        print("state recorded !")
+            
 
         BDX.disable_torque()
         portHandler.closePort()
