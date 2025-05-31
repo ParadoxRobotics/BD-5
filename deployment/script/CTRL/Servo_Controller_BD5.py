@@ -492,6 +492,7 @@ if __name__=='__main__':
         while True:
             last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
             pos, state = BDX.get_position(full=False)
+            print(pos)
             state_data.append(pos)
             if X_pressed == True:
                 print("Kill switch pressed !")
