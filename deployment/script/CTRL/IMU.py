@@ -71,7 +71,6 @@ class IMU:
                 imu_rot = R.from_quat(quat)
                 imu_rot_inv = imu_rot.inv()
                 gravity = imu_rot_inv.apply(self.transform_imu)
-                gravity[1] = -gravity[1]
                  
             except Exception as e:
                 print("[IMU]:", e)

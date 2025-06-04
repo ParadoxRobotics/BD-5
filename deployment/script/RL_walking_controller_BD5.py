@@ -62,16 +62,16 @@ class BD5RLController:
         self._action_scale = action_scale
 
         # Init pose 
-        self._default_angles_leg_list = [0.0, 
-                                        0.0, 
-                                        0.82498, 
-                                        1.64996,
-                                        0.82498,
+        self._default_angles_leg_list = [0.0,
+                                        -0.0523599,
+                                        0.8725738534323367,
+                                        1.7451477068646735,
+                                        0.8725738534323367,
                                         0.0,
-                                        0.0,
-                                        0.82498,
-                                        1.64996,
-                                        0.82498]
+                                        -0.0523599,
+                                        0.8725738534323367,
+                                        1.7451477068646735,
+                                        0.8725738534323367]
         self._default_angles_leg = np.array(self._default_angles_leg_list)
         self._default_angles_head_list = [0.5306, -0.5306]
         self._default_angles_full_list = self._default_angles_leg_list + self._default_angles_head_list
