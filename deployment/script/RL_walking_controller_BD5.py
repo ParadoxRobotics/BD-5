@@ -44,8 +44,8 @@ class BD5RLController:
         cutoff_frequency: float = None, # or 40Hz
         history_len: int = 5,
         action_scale: float = 0.3,
-        max_motor_speed: float = 4.82,
-        pid: float = None,
+        clip_motor_speed: bool = False,
+        pid: float = [844, 0, 0],
         vel_range_x: float = [-0.4, 0.4],
         vel_range_y: float = [-0.2, 0.2],
         vel_range_rot: float = [-1.0, 1.0],
@@ -63,12 +63,12 @@ class BD5RLController:
 
         # Init pose 
         self._default_angles_leg_list = [0.0,
-                                        -0.0523599,
+                                        0.0,
                                         0.8725738534323367,
                                         1.7451477068646735,
                                         0.8725738534323367,
                                         0.0,
-                                        -0.0523599,
+                                        0.0,
                                         0.8725738534323367,
                                         1.7451477068646735,
                                         0.8725738534323367]
@@ -82,7 +82,9 @@ class BD5RLController:
         self.obs_history = np.zeros(36 * history_len)
 
         # Init motor targets
-        self.max_motor_speed = max_motor_speed
+        self.clip_motor_speed = clip_motor_speed
+        if self.clip_motor_speed:
+            self.max_motor_speed = 4.82
         self.motor_targets = self._default_angles_leg.copy()
         self.prev_motor_targets = self._default_angles_leg.copy()
 
@@ -270,7 +272,7 @@ class BD5RLController:
                     if (time.time() - start_t > 1):  # give time to the filter to stabilize
                         self.motor_targets = filtered_motor_targets
                 # clip motor speed 
-                if self.max_motor_speed is not None:
+                if self.clip_motor_speed:
                     self.motor_targets = np.clip(self.motor_targets, 
                                                 self.prev_motor_targets - self.max_motor_speed * (self._ctrl_dt),
                                                 self.prev_motor_targets + self.max_motor_speed * (self._ctrl_dt)
@@ -313,11 +315,11 @@ if __name__ == "__main__":
     parser.add_argument("--control_freq", type=int, default=50)
     parser.add_argument("--command_freq", type=int, default=20)
     parser.add_argument("--pitch_bias", type=float, default=0, help="deg")
-    parser.add_argument("--max_motor_speed", type=float, default=4.82)
+    parser.add_argument("--clip_motor_speed", type=bool, default=False)
     parser.add_argument("--history_len", type=int, default=5)
     parser.add_argument("--pid", nargs='+', default=[800, 0, 0])
     parser.add_argument("--gait_freq", type=float, default=1.25)
-    parser.add_argument("--vel_range_x", type=float, nargs=2, default=[-0.8, 0.8])
+    parser.add_argument("--vel_range_x", type=float, nargs=2, default=[-0.4, 0.6])
     parser.add_argument("--vel_range_y", type=float, nargs=2, default=[-0.4, 0.4])
     parser.add_argument("--vel_range_rot", type=float, nargs=2, default=[-0.8, 0.8])
     parser.add_argument("--DXL_port", type=str, default="/dev/ttyUSB0")
@@ -339,7 +341,7 @@ if __name__ == "__main__":
         cutoff_frequency=args.cutoff_frequency,
         history_len=args.history_len,
         action_scale=args.action_scale,
-        max_motor_speed=args.max_motor_speed,
+        clip_motor_speed=args.clip_motor_speed,
         pid=args.pid,
         vel_range_x=args.vel_range_x,
         vel_range_y=args.vel_range_y,
