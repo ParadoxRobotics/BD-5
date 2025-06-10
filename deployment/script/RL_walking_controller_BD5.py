@@ -186,8 +186,6 @@ class BD5RLController:
         dxl_qpos, success_pos = self.servo.get_position(full=False) # Only recover the state of the legs
         if not success_pos or len(dxl_qpos) == 0:
             return None
-        dxl_qpos[1] = dxl_qpos[1] * -1
-        dxl_qpos[6] = dxl_qpos[6] * -1
         current_qpos = np.array(dxl_qpos) # Only recover the state of the legs
         # get joint angles delta and velocities
         joint_angles = current_qpos - self._default_angles_leg
@@ -286,8 +284,6 @@ class BD5RLController:
                 self._phase = np.fmod(phase_tp1 + np.pi, 2 * np.pi) - np.pi
                 # send motor target to servos 
                 target_position = self.motor_targets.tolist() + controlled_neck 
-                target_position[1] = target_position[1] * -1
-                target_position[6] = target_position[6] * -1
                 self.servo.set_position(value=target_position)
                 # time control 
                 i+=1
