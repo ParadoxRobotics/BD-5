@@ -318,7 +318,7 @@ if __name__ == "__main__":
     parser.add_argument("--clip_motor_speed", type=bool, default=False)
     parser.add_argument("--history_len", type=int, default=5)
     parser.add_argument("--pid", nargs='+', default=[800, 0, 0])
-    parser.add_argument("--gait_freq", type=float, default=1.25)
+    parser.add_argument("--gait_freq", type=float, default=1.0)
     parser.add_argument("--vel_range_x", type=float, nargs=2, default=[-0.4, 0.6])
     parser.add_argument("--vel_range_y", type=float, nargs=2, default=[-0.4, 0.4])
     parser.add_argument("--vel_range_rot", type=float, nargs=2, default=[-0.8, 0.8])
