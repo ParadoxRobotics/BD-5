@@ -79,7 +79,7 @@ class BD5RLController:
         # Action memory
         self._last_action = np.zeros_like(self._default_angles_leg, dtype=np.float32)
         # Observation memory
-        self.obs_history = np.zeros(36 * history_len)
+        self.obs_history = np.zeros(33 * history_len)
 
         # Init motor targets
         self.clip_motor_speed = clip_motor_speed
@@ -196,7 +196,6 @@ class BD5RLController:
         obs = np.hstack([
             imu_data["gyro"],
             imu_data["accelerometer"],
-            imu_data["gravity"],
             self.last_command,
             joint_angles,
             self._last_action,
