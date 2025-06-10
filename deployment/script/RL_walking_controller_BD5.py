@@ -49,7 +49,7 @@ class BD5RLController:
         vel_range_x: float = [-0.4, 0.4],
         vel_range_y: float = [-0.2, 0.2],
         vel_range_rot: float = [-1.0, 1.0],
-        gait_freq: float = 1.25,
+        gait_freq: float = 1.0,
         record: bool = False,
         
     ):
@@ -284,6 +284,8 @@ class BD5RLController:
                 self._phase = np.fmod(phase_tp1 + np.pi, 2 * np.pi) - np.pi
                 # send motor target to servos 
                 target_position = self.motor_targets.tolist() + controlled_neck 
+                target_position[1] = target_position[1] * -1
+                target_position[6] = target_position[6] * -1
                 self.servo.set_position(value=target_position)
                 # time control 
                 i+=1
