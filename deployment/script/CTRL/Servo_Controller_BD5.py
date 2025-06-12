@@ -419,7 +419,7 @@ if __name__=='__main__':
 
     
     # Activate + Set default angles
-    BDX.set_PID(pid=[800, 0, 80])
+    BDX.set_PID(pid=[800, 0, 0])
     BDX.enable_torque()
     BDX.set_position(default_angles_full)
     
