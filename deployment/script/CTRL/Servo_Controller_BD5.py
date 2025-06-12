@@ -400,6 +400,7 @@ if __name__=='__main__':
                           0.8725738534323367,
                           1.7451477068646735,
                           0.8725738534323367]
+    default_angles_leg = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     default_angles_head = [0.5306, -0.5306]
     default_angles_full = default_angles_leg + default_angles_head
     zeros_position = [0.0] * len(default_angles_full)
