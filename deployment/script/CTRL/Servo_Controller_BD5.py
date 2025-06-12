@@ -514,6 +514,8 @@ if __name__=='__main__':
             # read IMU
             imu_data = imu.get_data()
             print(imu_data["gyro"], imu_data["accelerometer"], imu_data["gravity"])
+            pos, state = BDX.get_position(full=False)
+            print(pos)
             
         time.sleep(1)
 
