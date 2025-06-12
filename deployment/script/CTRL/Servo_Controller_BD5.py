@@ -350,6 +350,7 @@ if __name__=='__main__':
     import time 
     import numpy as np
     from Gamepad import Gamepad
+    from IMU import IMU
 
     # Time param
     command_freq = 20
@@ -358,6 +359,9 @@ if __name__=='__main__':
 
     # Init gamepad
     controller = Gamepad(command_freq=command_freq, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], head_range=[-0.5236, 0.5236], deadzone=0.05)
+
+    # Init IMU
+    imu = IMU(sampling_freq=50, user_pitch_bias=0, calibrate=False)
 
     # Dxl param
     port = "/dev/ttyUSB0"
@@ -386,16 +390,16 @@ if __name__=='__main__':
         raise Exception("Error in servos ID or state !")
     
     # set default angles
-    default_angles_leg = [0.0, 
-                          0.0, 
-                          0.82498, 
-                          1.64996,
-                          0.82498,
+    default_angles_leg = [0.0,
+                          -0.0523599,
+                          0.8725738534323367,
+                          1.7451477068646735,
+                          0.8725738534323367,
                           0.0,
-                          0.0,
-                          0.82498,
-                          1.64996,
-                          0.82498]
+                          -0.0523599,
+                          0.8725738534323367,
+                          1.7451477068646735,
+                          0.8725738534323367]
     default_angles_head = [0.5306, -0.5306]
     default_angles_full = default_angles_leg + default_angles_head
     zeros_position = [0.0] * len(default_angles_full)
@@ -412,13 +416,12 @@ if __name__=='__main__':
             print("BD-5 ACTIVATE !")
             break
 
-    """
+    
     # Activate + Set default angles
-    BDX.set_PID(pid=[400, 0, 0])
+    BDX.set_PID(pid=[800, 0, 80])
     BDX.enable_torque()
     BDX.set_position(default_angles_full)
-    """
-
+    
     
     try:
         """
@@ -488,6 +491,7 @@ if __name__=='__main__':
             BDX.set_position(default_angles_full)
             time.sleep(5)
         """
+        """
         state_data = []
         while True:
             last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
@@ -500,8 +504,18 @@ if __name__=='__main__':
         state_data = np.array(state_data)
         np.save("/home/robot/BD-5/bd5_state.npy", state_data)
         print("state recorded !")
+        """
 
-        time.sleep(4)
+        while True:
+            last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
+            if X_pressed == True:
+                print("Kill switch pressed !")
+                break
+            # read IMU
+            imu_data = imu.get_data()
+            print(imu_data["gyro"], imu_data["accelerometer"], imu_data["gravity"])
+            
+        time.sleep(1)
 
         BDX.disable_torque()
         portHandler.closePort()

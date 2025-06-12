@@ -94,6 +94,15 @@ class BD5RLController:
         self.smooth_neck = 0.0
         self.tau_neck = 0.4
 
+        # Init low pass filter
+        self.action_filter = None
+        if cutoff_frequency is not None:
+            self.action_filter = LowPassActionFilter(self.control_freq, cutoff_frequency)
+
+        # Exponential filter 
+        self.exp_filter = exponential_filter
+        self.prev_filter_state = self._default_angles_leg.copy()
+
         # Phase init -> in real case self._ctrl_dt = self._n_substeps * self._sim_dt
         self._gait_freq = gait_freq
         self._phase = np.array([0.0, np.pi])
@@ -112,15 +121,6 @@ class BD5RLController:
         self.last_command = [0.0, 0.0, 0.0]
         # Init command logic
         self.PAUSED = False
-
-        # Init low pass filter
-        self.action_filter = None
-        if cutoff_frequency is not None:
-            self.action_filter = LowPassActionFilter(self.control_freq, cutoff_frequency)
-
-        # Exponential filter 
-        self.exp_filter = exponential_filter
-        self.prev_filter_state = self._default_angles_leg.copy()
 
         # Init Servo Controller
         self.portHandler = PortHandler(DXL_port)
