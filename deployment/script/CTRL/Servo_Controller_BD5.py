@@ -72,6 +72,7 @@ class ServoControllerBD5():
 
         # Mem address for XM430 and XC430
         self.ADDR_TORQUE_ENABLE = 64
+        self.ADDR_RETURN_DELAY_TIME = 9
         self.ADDR_POSITION_P_GAIN = 84
         self.ADDR_POSITION_I_GAIN = 82
         self.ADDR_POSITION_D_GAIN = 80
@@ -83,6 +84,7 @@ class ServoControllerBD5():
         
         # Len return mem value for XM430 and XC430
         self.LEN_TORQUE_ENABLE = 1
+        self.LEN_RETURN_DELAY_TIME = 1
         self.LEN_POSITION_P_GAIN = 2
         self.LEN_POSITION_I_GAIN = 2
         self.LEN_POSITION_D_GAIN = 2
@@ -350,7 +352,6 @@ if __name__=='__main__':
     import time 
     import numpy as np
     from Gamepad import Gamepad
-    from IMU import IMU
 
     # Time param
     command_freq = 20
@@ -358,14 +359,11 @@ if __name__=='__main__':
     ctrl_dt = 1.0 / ctrl_freq
 
     # Init gamepad
-    controller = Gamepad(command_freq=command_freq, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], head_range=[-0.5236, 0.5236], deadzone=0.05)
-
-    # Init IMU
-    imu = IMU(sampling_freq=50, user_pitch_bias=0, calibrate=False)
+    controller = Gamepad(command_freq=command_freq, vel_range_x=[-0.6, 0.6], vel_range_y=[-0.6, 0.6], vel_range_rot=[-1.0, 1.0], head_range=[-0.5236, 0.5236], deadzone=0.02)
 
     # Dxl param
     port = "/dev/ttyUSB0"
-    baudrate = 1000000
+    baudrate = 2000000
     # connect to U2D2
     portHandler = PortHandler(port)
     packetHandler = PacketHandler(2.0)
@@ -404,12 +402,6 @@ if __name__=='__main__':
     default_angles_head = [0.5306, -0.5306]
     default_angles_full = default_angles_leg + default_angles_head
     zeros_position = [0.0] * len(default_angles_full)
-    # Smoothed angles
-    smoothed_angles = 0
-    tau = 0.4
-
-    # Command Logic
-    PAUSED = False
 
     while True:
         last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
@@ -417,104 +409,17 @@ if __name__=='__main__':
             print("BD-5 ACTIVATE !")
             break
 
-    
     # Activate + Set default angles
     BDX.set_PID(pid=[800, 0, 0])
     BDX.enable_torque()
     BDX.set_position(default_angles_full)
     
-    
     try:
-        """
-        i = 0
-        while True:
-            t = time.time()
-            last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
-            smoothed_angles = tau * (head_t) + (1 - tau) * smoothed_angles
-            controlled_head = [default_angles_head[0], default_angles_head[1] + smoothed_angles]
-
-            # Kill-switch exit program
-            if X_pressed == True:
-                print("Kill switch pressed !")
-                BDX.disable_torque()
-                portHandler.closePort()
-                print("Port closed !")
-                break
-            # Pause inference/action process 
-            if T_pressed == True:
-                PAUSED = not PAUSED
-                if PAUSED:
-                    print("PAUSE")
-                else:
-                    print("UNPAUSE")
-
-            if PAUSED:
-                time.sleep(0.01)
-                continue
-
-            # set default angles
-            BDX.set_position(default_angles_leg + controlled_head)
-            # read position 
-            pos, state = BDX.get_position(full=False)
-            # vel, state = BDX.get_velocity(full=False)
-            #if len(pos) > 0 or len(vel) > 0:
-            if len(pos) > 0:
-                print("Position =", pos, len(pos))
-                #print("Angular velocity =", vel, len(vel))
-            else:
-                print("No data available !")
-                continue
-            # time control 
-            i+=1
-            took = time.time() - t
-            if (1 / ctrl_freq - took) < 0:
-                print(
-                    "Policy control budget exceeded by",
-                    np.around(took - 1 / ctrl_freq, 3),
-                )
-            time.sleep(max(0, 1 / ctrl_freq - took))
-        """
-        """
-        delta_val = 0.261799
-        time.sleep(10)
-        for i in range(10):
-            # +10 °
-            pos = default_angles_full.copy()
-            pos[i] = pos[i] + delta_val
-            BDX.set_position(pos)
-            time.sleep(5)
-            # -10 °
-            pos = default_angles_full.copy()
-            pos[i] = pos[i] - delta_val
-            BDX.set_position(pos)
-            time.sleep(5)
-            # 0
-            BDX.set_position(default_angles_full)
-            time.sleep(5)
-        """
-        """
-        state_data = []
-        while True:
-            last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
-            pos, state = BDX.get_position(full=False)
-            print(pos)
-            state_data.append(pos)
-            if X_pressed == True:
-                print("Kill switch pressed !")
-                break
-        state_data = np.array(state_data)
-        np.save("/home/robot/BD-5/bd5_state.npy", state_data)
-        print("state recorded !")
-        """
-
         while True:
             last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
             if X_pressed == True:
                 print("Kill switch pressed !")
                 break
-            # read IMU
-            imu_data = imu.get_data()
-            #print(imu_data["gyro"], imu_data["accelerometer"], imu_data["gravity"])
             pos, state = BDX.get_position(full=False)
             print(pos)
             
