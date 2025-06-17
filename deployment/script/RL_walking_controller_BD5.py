@@ -9,28 +9,6 @@ from CTRL.IMU import IMU
 from CTRL.ONNX_infer import OnnxInfer
 from CTRL.Gamepad import Gamepad
 
-class LowPassActionFilter:
-    def __init__(self, control_freq, cutoff_frequency=40.0):
-        self.last_action = 0
-        self.current_action = 0
-        self.control_freq = float(control_freq)
-        self.cutoff_frequency = float(cutoff_frequency)
-        self.alpha = self.compute_alpha()
-
-    def compute_alpha(self):
-        return (1.0 / self.cutoff_frequency) / (
-            1.0 / self.control_freq + 1.0 / self.cutoff_frequency
-        )
-
-    def push(self, action):
-        self.current_action = action
-
-    def get_filtered_action(self):
-        self.last_action = (
-            self.alpha * self.last_action + (1 - self.alpha) * self.current_action
-        )
-        return self.last_action
-
 class BD5RLController:
     def __init__(
         self,
@@ -41,11 +19,10 @@ class BD5RLController:
         control_freq: float = 50, # 50 Hz
         command_freq: float = 20, # 20 Hz
         exponential_filter: bool = False,
-        cutoff_frequency: float = None, # or 40Hz
         history_len: int = 5,
         action_scale: float = 0.3,
         clip_motor_speed: bool = False,
-        pid: float = [844, 0, 0],
+        pid: float = [800, 0, 0],
         vel_range_x: float = [-0.4, 0.4],
         vel_range_y: float = [-0.2, 0.2],
         vel_range_rot: float = [-1.0, 1.0],
@@ -93,11 +70,6 @@ class BD5RLController:
         self._ctrl_dt = 1 / control_freq
         self.smooth_neck = 0.0
         self.tau_neck = 0.4
-
-        # Init low pass filter
-        self.action_filter = None
-        if cutoff_frequency is not None:
-            self.action_filter = LowPassActionFilter(self.control_freq, cutoff_frequency)
 
         # Exponential filter 
         self.exp_filter = exponential_filter
@@ -260,17 +232,6 @@ class BD5RLController:
                 self._last_action = onnx_pred.copy()
                 # update motor targets
                 self.motor_targets = onnx_pred * self._action_scale + self._default_angles_leg
-                # filter the motor output 
-                if self.exp_filter:
-                    filter_state = 0.8 * self.prev_filter_state + 0.2 * self.motor_targets
-                    self.prev_filter_state = filter_state.copy()
-                    self.motor_targets = filter_state
-                # get action filtered 
-                if self.action_filter is not None:
-                    self.action_filter.push(self.motor_targets)
-                    filtered_motor_targets = self.action_filter.get_filtered_action()
-                    if (time.time() - start_t > 1):  # give time to the filter to stabilize
-                        self.motor_targets = filtered_motor_targets
                 # clip motor speed 
                 if self.clip_motor_speed:
                     self.motor_targets = np.clip(self.motor_targets, 
@@ -279,6 +240,11 @@ class BD5RLController:
                                                 )
                 # update previous motor targets
                 self.prev_motor_targets = self.motor_targets.copy()
+                # filter the motor output 
+                if self.exp_filter:
+                    filter_state = 0.8 * self.prev_filter_state + 0.2 * self.motor_targets
+                    self.prev_filter_state = filter_state.copy()
+                    self.motor_targets = filter_state
                 # update phase 
                 phase_tp1 = self._phase + self._phase_dt
                 self._phase = np.fmod(phase_tp1 + np.pi, 2 * np.pi) - np.pi
@@ -324,7 +290,6 @@ if __name__ == "__main__":
     parser.add_argument("--vel_range_rot", type=float, nargs=2, default=[-0.8, 0.8])
     parser.add_argument("--DXL_port", type=str, default="/dev/ttyUSB0")
     parser.add_argument("--DXL_Baudrate", type=int, default=2000000)
-    parser.add_argument("--cutoff_frequency", type=float, default=None)
     parser.add_argument("--exponential_filter", type=bool, default=False)
     parser.add_argument("--record", type=bool, default=False)
 
@@ -338,7 +303,6 @@ if __name__ == "__main__":
         control_freq=args.control_freq,
         command_freq=args.command_freq,
         exponential_filter=args.exponential_filter,
-        cutoff_frequency=args.cutoff_frequency,
         history_len=args.history_len,
         action_scale=args.action_scale,
         clip_motor_speed=args.clip_motor_speed,
