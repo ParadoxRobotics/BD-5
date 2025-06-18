@@ -363,7 +363,7 @@ if __name__=='__main__':
 
     # Dxl param
     port = "/dev/ttyUSB0"
-    baudrate = 2000000
+    baudrate = 1000000
     # connect to U2D2
     portHandler = PortHandler(port)
     packetHandler = PacketHandler(2.0)

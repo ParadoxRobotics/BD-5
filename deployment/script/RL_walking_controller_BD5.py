@@ -14,7 +14,7 @@ class BD5RLController:
         self,
         onnx_model_path: str,
         DXL_port: str = "/dev/ttyDXL",
-        DXL_Baudrate: int = 2000000,
+        DXL_Baudrate: int = 1000000,
         pitch_bias: float = 0,
         control_freq: float = 50, # 50 Hz
         command_freq: float = 20, # 20 Hz
@@ -283,13 +283,13 @@ if __name__ == "__main__":
     parser.add_argument("--pitch_bias", type=float, default=0, help="deg")
     parser.add_argument("--clip_motor_speed", type=bool, default=False)
     parser.add_argument("--history_len", type=int, default=5)
-    parser.add_argument("--pid", nargs='+', default=[800, 0, 0])
+    parser.add_argument("--pid", nargs='+', default=[800, 0, 80])
     parser.add_argument("--gait_freq", type=float, default=1.0)
     parser.add_argument("--vel_range_x", type=float, nargs=2, default=[-0.4, 0.6])
     parser.add_argument("--vel_range_y", type=float, nargs=2, default=[-0.4, 0.4])
     parser.add_argument("--vel_range_rot", type=float, nargs=2, default=[-0.8, 0.8])
     parser.add_argument("--DXL_port", type=str, default="/dev/ttyUSB0")
-    parser.add_argument("--DXL_Baudrate", type=int, default=2000000)
+    parser.add_argument("--DXL_Baudrate", type=int, default=1000000)
     parser.add_argument("--exponential_filter", type=bool, default=False)
     parser.add_argument("--record", type=bool, default=False)
 
