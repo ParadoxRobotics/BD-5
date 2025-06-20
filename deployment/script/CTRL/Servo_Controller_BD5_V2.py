@@ -303,7 +303,6 @@ class ServoControllerBD5():
         if dxl_comm_result != COMM_SUCCESS:
             print(f"[WRITE_ERROR] {self.packetHandler.getTxRxResult(dxl_comm_result)}")
 
-
     # Get current position 
     def get_position(self):
         success = True

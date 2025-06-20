@@ -4,7 +4,7 @@ import numpy as np
 
 from dynamixel_sdk import *
 
-from CTRL.Servo_Controller_BD5 import ServoControllerBD5
+from CTRL.Servo_Controller_BD5_V2 import ServoControllerBD5
 from CTRL.IMU import IMU
 from CTRL.ONNX_infer import OnnxInfer
 from CTRL.Gamepad import Gamepad
@@ -23,9 +23,9 @@ class BD5RLController:
         action_scale: float = 0.3,
         clip_motor_speed: bool = False,
         pid: float = [800, 0, 0],
-        vel_range_x: float = [-0.4, 0.4],
-        vel_range_y: float = [-0.2, 0.2],
-        vel_range_rot: float = [-1.0, 1.0],
+        vel_range_x: float = [-0.4, 0.6],
+        vel_range_y: float = [-0.4, 0.4],
+        vel_range_rot: float = [-0.8, 0.8],
         gait_freq: float = 1.0,
         record: bool = False,
         
@@ -118,6 +118,9 @@ class BD5RLController:
             self.portHandler.closePort()
             raise Exception("Error in servos ID or state !")   
         
+        # set return delay to 20us (2 * 10)
+        self.servo.set_return_delay(value=10)
+
         # set dynamixel PID value 
         if pid is not None and (isinstance(pid, list)) :
             if len(pid) == 3:
@@ -155,10 +158,10 @@ class BD5RLController:
         # get IMU data  
         imu_data = self.imu.get_data()
         # get Dynamixel data 
-        dxl_qpos, success_pos = self.servo.get_position(full=False) # Only recover the state of the legs
+        dxl_qpos, success_pos = self.servo.get_position() # Only recover the state of the legs
         if not success_pos or len(dxl_qpos) == 0:
             return None
-        current_qpos = np.array(dxl_qpos) # Only recover the state of the legs
+        current_qpos = np.array(dxl_qpos[:10]) # Only recover the state of the legs
         # get joint angles delta and velocities
         joint_angles = current_qpos - self._default_angles_leg
         # adjust phase
