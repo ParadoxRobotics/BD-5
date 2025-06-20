@@ -98,9 +98,9 @@ class ServoControllerBD5():
         self.groupSyncWrite_pos = GroupSyncWrite(self.portHandler, self.packetHandler, self.ADDR_GOAL_POSITION, self.LEN_GOAL_POSITION)
         self.groupSyncRead_pos = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
         # get sync group for reading velocity
-        self.groupSyncRead_vel = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_VELOCITY, self.LEN_PRESENT_VELOCITY)
+        #self.groupSyncRead_vel = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_VELOCITY, self.LEN_PRESENT_VELOCITY)
         # get sync group for reading voltage
-        self.groupSyncRead_volt = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_VOLTAGE, self.LEN_PRESENT_VOLTAGE)
+        #self.groupSyncRead_volt = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_VOLTAGE, self.LEN_PRESENT_VOLTAGE)
 
     # correct rotation 
     def correctRotation(self, value, joint_list):
@@ -271,6 +271,11 @@ class ServoControllerBD5():
     def disable_torque(self):
         self.itemWriteMultiple(self.joint_ID_list, self.ADDR_TORQUE_ENABLE, 0, self.LEN_TORQUE_ENABLE)
 
+    # Set return delay for all servos
+    def set_return_delay(self, value):
+        self.packetHandler.write1ByteTxOnly(self.portHandler, BROADCAST_ID, self.ADDR_RETURN_DELAY_TIME, value)
+        print(f"Setting Return Delay Time for all servos to {value*2} us...")
+
     # Set P gain
     def set_P_gain(self, ids, value):
         self.itemWriteMultiple(ids, self.ADDR_POSITION_P_GAIN, value, self.LEN_POSITION_P_GAIN)
@@ -300,6 +305,7 @@ class ServoControllerBD5():
         # send command
         self.syncWrite(self.groupSyncWrite_pos, self.joint_ID_list, ang_pos, self.LEN_GOAL_POSITION)
 
+    """
     # Get current velocity
     def get_velocity(self, full=True):
         if full:
@@ -317,7 +323,8 @@ class ServoControllerBD5():
             # correct rotation
             velocities = self.correctRotation(velocities, self.joints_correction_list[:10])
         return velocities, success
-    
+    """
+        
     # Get current position 
     def get_position(self, full=True):
         if full:
@@ -336,6 +343,7 @@ class ServoControllerBD5():
             positions = self.correctRotation(positions, self.joints_correction_list[:10])
         return positions, success
 
+    """
     # Get voltage input 
     def get_voltage(self, mean):
         # read raw voltage
@@ -347,6 +355,7 @@ class ServoControllerBD5():
             return sum(voltage)/len(voltage), success
         else:
             return voltage, success
+    """
 
 if __name__=='__main__':   
     import time 
@@ -410,6 +419,7 @@ if __name__=='__main__':
             break
 
     # Activate + Set default angles
+    BDX.set_return_delay(value=1)
     BDX.set_PID(pid=[800, 0, 0])
     BDX.enable_torque()
     BDX.set_position(default_angles_full)
@@ -421,6 +431,7 @@ if __name__=='__main__':
                 print("Kill switch pressed !")
                 break
             pos, state = BDX.get_position(full=False)
+            BDX.set_position(default_angles_full)
             print(pos)
             
         time.sleep(1)

@@ -157,9 +157,6 @@ class BD5RLController:
         # get Dynamixel data 
         dxl_qpos, success_pos = self.servo.get_position(full=False) # Only recover the state of the legs
         if not success_pos or len(dxl_qpos) == 0:
-            volt, success = self.servo.get_voltage(mean=True)
-            if success:
-                print(f"!!! VOLTAGE AT FAILURE: {volt:.2f}V !!!")
             return None
         current_qpos = np.array(dxl_qpos) # Only recover the state of the legs
         # get joint angles delta and velocities
