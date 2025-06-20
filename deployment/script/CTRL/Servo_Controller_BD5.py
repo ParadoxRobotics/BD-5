@@ -424,8 +424,12 @@ if __name__=='__main__':
     BDX.enable_torque()
     BDX.set_position(default_angles_full)
     
+    i=0
     try:
+        print("Starting")
+        start_t = time.time()
         while True:
+            t = time.time()
             last_state, head_t, S_pressed, T_pressed, C_pressed, X_pressed = controller.get_last_command()
             if X_pressed == True:
                 print("Kill switch pressed !")
@@ -433,6 +437,15 @@ if __name__=='__main__':
             pos, state = BDX.get_position(full=False)
             BDX.set_position(default_angles_full)
             #print(pos)
+            # time control 
+            i+=1
+            took = time.time() - t
+            if (1 / ctrl_freq - took) < 0:
+                print(
+                    "Policy control budget exceeded by",
+                    np.around(took - 1 / ctrl_freq, 3),
+                )
+            time.sleep(max(0, 1 / ctrl_freq - took))
             
         time.sleep(1)
 
