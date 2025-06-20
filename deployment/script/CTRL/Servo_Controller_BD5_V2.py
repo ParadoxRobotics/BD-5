@@ -313,8 +313,8 @@ class ServoControllerBD5():
             return [], False # Return None on failure
         positions = []
         for value_idx in range(len(self.joint_ID_list)):
-            if self.groupSyncRead_position.isAvailable(self.joint_ID_list[value_idx], self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION):
-                dxl_pos = self.groupSyncRead_position.getData(self.joint_ID_list[value_idx], self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
+            if self.groupSyncRead_pos.isAvailable(self.joint_ID_list[value_idx], self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION):
+                dxl_pos = self.groupSyncRead_pos.getData(self.joint_ID_list[value_idx], self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
                 positions.append(dxl_pos)
             else:
                 success = False
