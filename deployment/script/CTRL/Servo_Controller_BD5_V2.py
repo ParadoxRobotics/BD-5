@@ -298,7 +298,7 @@ class ServoControllerBD5():
             # Prepare 4-byte parameter for SyncWrite
             param_goal_position = [DXL_LOBYTE(DXL_LOWORD(ang_pos[value_idx])), DXL_HIBYTE(DXL_LOWORD(ang_pos[value_idx])),
                                    DXL_LOBYTE(DXL_HIWORD(ang_pos[value_idx])), DXL_HIBYTE(DXL_HIWORD(ang_pos[value_idx]))]
-            self.groupSyncWrite_pos.addParam(self.joints_ID[value_idx], param_goal_position)
+            self.groupSyncWrite_pos.addParam(self.joint_ID_list[value_idx], param_goal_position)
         dxl_comm_result = self.groupSyncWrite_pos.txPacket()
         if dxl_comm_result != COMM_SUCCESS:
             print(f"[WRITE_ERROR] {self.packetHandler.getTxRxResult(dxl_comm_result)}")
@@ -404,7 +404,7 @@ if __name__=='__main__':
             if X_pressed == True:
                 print("Kill switch pressed !")
                 break
-            pos, state = BDX.get_position(full=False)
+            pos, state = BDX.get_position()
             BDX.set_position(default_angles_full)
             print(pos, state)
             # time control 
