@@ -273,7 +273,7 @@ class ServoControllerBD5():
 
     # Set return delay for all servos
     def set_return_delay(self, value):
-        self.packetHandler.write1ByteTxOnly(self.portHandler, BROADCAST_ID, self.ADDR_RETURN_DELAY_TIME, value)
+        self.itemWriteMultiple(self.joint_ID_list, self.ADDR_RETURN_DELAY_TIME, value, self.LEN_RETURN_DELAY_TIME)
         print(f"Setting Return Delay Time for all servos to {value*2} us...")
 
     # Set P gain
@@ -419,7 +419,7 @@ if __name__=='__main__':
             break
 
     # Activate + Set default angles
-    BDX.set_return_delay(value=20)
+    BDX.set_return_delay(value=250)
     BDX.set_PID(pid=[800, 0, 0])
     BDX.enable_torque()
     BDX.set_position(default_angles_full)
