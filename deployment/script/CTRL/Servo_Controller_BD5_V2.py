@@ -406,7 +406,7 @@ if __name__=='__main__':
                 break
             pos, state = BDX.get_position()
             BDX.set_position(default_angles_full)
-            print(pos, state)
+            #print(pos, state)
             # time control 
             i+=1
             took = time.time() - t
