@@ -432,7 +432,7 @@ if __name__=='__main__':
                 break
             pos, state = BDX.get_position(full=False)
             BDX.set_position(default_angles_full)
-            print(pos)
+            #print(pos)
             
         time.sleep(1)
 
