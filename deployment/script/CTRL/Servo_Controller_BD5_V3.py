@@ -377,9 +377,6 @@ if __name__=='__main__':
             pos, state = BDX.get_position()
             if not state:
                 continue # Skip loop if read failed
-
-            # 2. COMPUTE your robot logic here...
-            # (Currently just sends default angles)
             
             # 3. WRITE all servo positions (1 non-blocking transaction)
             BDX.set_position(default_angles_full)

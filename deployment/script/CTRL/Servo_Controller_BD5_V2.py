@@ -67,7 +67,6 @@ class ServoControllerBD5():
         
         # Value limit XM430-W350-T and XC430-W150-T
         self.MAX_POS = 4096
-        self.MAX_VEL = 1024 
         self.MAX_ANG = 2*self.PI
 
         # Mem address for XM430 and XC430
@@ -76,24 +75,18 @@ class ServoControllerBD5():
         self.ADDR_POSITION_P_GAIN = 84
         self.ADDR_POSITION_I_GAIN = 82
         self.ADDR_POSITION_D_GAIN = 80
-        self.ADDR_PROFILE_VELOCITY = 112
         self.ADDR_GOAL_POSITION = 116
-        self.ADDR_PRESENT_VOLTAGE = 144
         self.ADDR_PRESENT_POSITION = 132
-        self.ADDR_PRESENT_VELOCITY = 128
-        
+
         # Len return mem value for XM430 and XC430
         self.LEN_TORQUE_ENABLE = 1
         self.LEN_RETURN_DELAY_TIME = 1
         self.LEN_POSITION_P_GAIN = 2
         self.LEN_POSITION_I_GAIN = 2
         self.LEN_POSITION_D_GAIN = 2
-        self.LEN_PROFILE_VELOCITY = 4
         self.LEN_GOAL_POSITION = 4
-        self.LEN_PRESENT_VOLTAGE = 2
         self.LEN_PRESENT_POSITION = 4
-        self.LEN_PRESENT_VELOCITY = 4
-        
+
         # get sync group for read and write position 
         self.groupSyncWrite_pos = GroupSyncWrite(self.portHandler, self.packetHandler, self.ADDR_GOAL_POSITION, self.LEN_GOAL_POSITION)
         self.groupSyncRead_pos = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
