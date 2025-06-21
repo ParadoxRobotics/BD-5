@@ -353,7 +353,7 @@ if __name__=='__main__':
             time.sleep(0.1)
 
         # Activate + Set default configuration
-        BDX.set_return_delay(value=1) # Set delay to 2us for max speed
+        BDX.set_return_delay(value=50) # Set delay to 2us for max speed
         BDX.set_PID(pid=[800, 0, 0])
         BDX.enable_torque()
         time.sleep(0.1)
@@ -375,6 +375,7 @@ if __name__=='__main__':
             # --- CORE CONTROL LOOP ---
             # 1. READ all servo positions (1 blocking transaction)
             pos, state = BDX.get_position()
+            print(pos)
             if not state:
                 continue # Skip loop if read failed
             
