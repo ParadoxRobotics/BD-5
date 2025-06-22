@@ -89,10 +89,12 @@ class ServoControllerBD5():
 
         # get sync group for read and write position 
         self.groupSyncWrite_pos = GroupSyncWrite(self.portHandler, self.packetHandler, self.ADDR_GOAL_POSITION, self.LEN_GOAL_POSITION)
-        self.groupSyncRead_pos = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
-
+        self.groupBulkRead_pos = GroupBulkRead(self.portHandler, self.packetHandler)
         for ids in self.joint_ID_list:
-            self.groupSyncRead_pos.addParam(ids)
+            # Add each motor to the bulk read list
+            addparam_result = self.groupBulkRead_pos.addParam(ids, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
+            if not addparam_result:
+                raise Exception(f"[ID:{ids}] groupBulkRead addparam failed")
 
     # correct rotation 
     def correctRotation(self, value, joint_list):
@@ -173,15 +175,6 @@ class ServoControllerBD5():
             return 0, False
         return state, self.checkError(dxl_comm_result, dxl_error)
 
-    # read eeprom register for multiple servos
-    def itemReadMultiple(self, ids, address, length):
-        states = []
-        for id in ids:
-            state, success = self.itemRead(id, address, length)
-            if success != True:
-                return [], False
-            states.append(state)
-        return states, True
 
     # Sync write to servos
     def syncWrite(self, groupSyncWrite, ids, commands, length):
@@ -208,34 +201,6 @@ class ServoControllerBD5():
             return False
         return True
 
-    # Sync read servos value
-    def syncRead(self, groupSyncRead, ids, address, length):
-        groupSyncRead.clearParam()
-        for id in ids:
-            dxl_addparam_result = groupSyncRead.addParam(id)
-            if dxl_addparam_result != True:
-                print("ID:%03d groupSyncRead addparam failed" % id)
-                return [], False
-
-        dxl_comm_result = groupSyncRead.txRxPacket()
-        if dxl_comm_result != COMM_SUCCESS:
-            print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
-            return [], False
-
-        states = []
-        for id in ids:                    
-            if groupSyncRead.isAvailable(id, address, length):
-                state = groupSyncRead.getData(id, address, length)
-            else:
-                print(f"[Warning] ID {id} has no available data (no status packet).")
-                state = None
-            if length == 2 and state > 0x7fff:
-                state = state - 65536
-            elif length == 4 and state > 0x7fffffff:
-                state = state - 4294967296
-            states.append(state)
-        return states, True
-    
     def ping(self):
         for id in self.joint_ID_list:
             model_num, dxl_comm_result, dxl_error = self.packetHandler.ping(self.portHandler, id)
@@ -296,27 +261,30 @@ class ServoControllerBD5():
         if dxl_comm_result != COMM_SUCCESS:
             print(f"[WRITE_ERROR] {self.packetHandler.getTxRxResult(dxl_comm_result)}")
 
-    # Get current position 
     def get_position(self):
-        success = True
-        dxl_comm_result = self.groupSyncRead_pos.txRxPacket()
+        # Init position list
+        positions = []
+        dxl_comm_result = self.groupBulkRead_pos.txRxPacket()
         if dxl_comm_result != COMM_SUCCESS:
             print(f"[READ_ERROR] {self.packetHandler.getTxRxResult(dxl_comm_result)}")
-            return [], False # Return None on failure
-        positions = []
-        for value_idx in range(len(self.joint_ID_list)):
-            if self.groupSyncRead_pos.isAvailable(self.joint_ID_list[value_idx], self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION):
-                dxl_pos = self.groupSyncRead_pos.getData(self.joint_ID_list[value_idx], self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
-                positions.append(dxl_pos)
-            else:
-                success = False
+            return None, None, None, False
+        for joint_id in self.joint_ID_list:
+            # Check if data for this servo is available
+            if not self.groupBulkRead_pos.isAvailable(joint_id, self.ADDR_PRESENT_CURRENT, self.LEN_PRESENT_STATE_BLOCK):
+                print(f"[Warning] ID {joint_id} has no available data.")
                 positions.append(None)
-        if success:
-            # convert to radian 
-            positions = self.dxl2position(value=positions)
-            # correct rotation
-            positions = self.correctRotation(positions, self.joints_correction_list)
-        return positions, success
+                continue
+            # Extract data using the correct address and length for each piece
+            raw_pos = self.groupBulkRead_pos.getData(joint_id, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
+            positions.append(raw_pos)
+        # Partial failure
+        if any(p is None for p in positions):
+             return positions, False 
+        # Convert DXL position to radians and apply sign corrections
+        positions_rad = self.dxl2position(positions)
+        positions_rad_corrected = self.correctRotation(positions_rad, self.joints_correction_list)
+        # return current position and state
+        return positions_rad_corrected, True
 
 
 if __name__=='__main__':   
@@ -398,7 +366,7 @@ if __name__=='__main__':
                 break
             pos, state = BDX.get_position()
             BDX.set_position(default_angles_full)
-            #print(pos, state)
+            print(pos, state)
             # time control 
             i+=1
             took = time.time() - t

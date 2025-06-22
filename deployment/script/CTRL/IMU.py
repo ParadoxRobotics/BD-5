@@ -22,7 +22,7 @@ class IMU:
         self.nominal_pitch_bias = 0
         self.calibrate = calibrate
 
-        i2c = busio.I2C(board.SCL, board.SDA)
+        i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
         self.imu = BNO08X_I2C(i2c)
 
         # Enable Gyroscope and Accelerometer
