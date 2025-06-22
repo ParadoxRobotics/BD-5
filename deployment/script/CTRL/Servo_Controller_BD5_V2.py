@@ -267,10 +267,10 @@ class ServoControllerBD5():
         dxl_comm_result = self.groupBulkRead_pos.txRxPacket()
         if dxl_comm_result != COMM_SUCCESS:
             print(f"[READ_ERROR] {self.packetHandler.getTxRxResult(dxl_comm_result)}")
-            return None, None, None, False
+            return None, False
         for joint_id in self.joint_ID_list:
             # Check if data for this servo is available
-            if not self.groupBulkRead_pos.isAvailable(joint_id, self.ADDR_PRESENT_CURRENT, self.LEN_PRESENT_STATE_BLOCK):
+            if not self.groupBulkRead_pos.isAvailable(joint_id, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION):
                 print(f"[Warning] ID {joint_id} has no available data.")
                 positions.append(None)
                 continue
