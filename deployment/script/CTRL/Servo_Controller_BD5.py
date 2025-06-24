@@ -99,10 +99,12 @@ class ServoControllerBD5():
         self.groupSyncRead_pos = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
 
         for ids in self.joint_ID_list:
-            # Add each motor to the bulk read list
-            addparam_result = self.groupSyncRead_pos.addParam(ids, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
+            # Add each motor to the bulk read list. 
+            # Only the ID is needed here.
+            addparam_result = self.groupSyncRead_pos.addParam(ids) # <-- CORRECTED LINE
             if not addparam_result:
-                raise Exception(f"[ID:{ids}] GroupSyncRead addparam failed")
+                # Note: The original error message here was slightly misleading. Corrected it.
+                raise Exception(f"[ID:{ids}] groupSyncRead_pos addparam failed")
 
     # correct rotation 
     def correctRotation(self, value, joint_list):
@@ -396,7 +398,7 @@ if __name__=='__main__':
             if X_pressed == True:
                 print("Kill switch pressed !")
                 break
-            pos, state = BDX.get_position(full=False)
+            pos, state = BDX.get_position(full=True)
             BDX.set_position(default_angles_full)
             #print(pos)
             # time control 
