@@ -238,9 +238,17 @@ class ServoControllerBD5():
 
     # Set PID for the legs
     def set_PID(self, pid):
+        self.set_P_gain(ids=self.joint_ID_list, value=[pid[0]] * len(self.joint_ID_list))
+        self.set_I_gain(ids=self.joint_ID_list, value=[pid[1]] * len(self.joint_ID_list))
+        self.set_D_gain(ids=self.joint_ID_list, value=[pid[2]] * len(self.joint_ID_list))
+
+    """
+    # Set PID for the legs
+    def set_PID(self, pid):
         self.set_P_gain(ids=self.joint_ID_list[:10], value=[pid[0]] * len(self.joint_ID_list[:10]))
         self.set_I_gain(ids=self.joint_ID_list[:10], value=[pid[1]] * len(self.joint_ID_list[:10]))
         self.set_D_gain(ids=self.joint_ID_list[:10], value=[pid[2]] * len(self.joint_ID_list[:10]))
+    """
 
     # Set goal position to all servos 
     def set_position(self, value):
