@@ -65,7 +65,8 @@ class ServoControllerBD5():
             "head_pitch": 1,
         }
         self.joints_correction_list = list(self.joints_correction.values())
-        
+        self.joints_leg_correction_list = self.joints_correction_list[:10]
+
         # Value limit XM430-W350-T and XC430-W150-T
         self.MAX_POS = 4096
         self.MAX_VEL = 1024 
@@ -300,7 +301,7 @@ class ServoControllerBD5():
         # convert to radian 
         positions = self.dxl2position(value=positions)
         # correct rotation
-        positions = self.correctRotation(positions, self.joints_correction_list)
+        positions = self.correctRotation(positions, self.joints_leg_correction_list)
         return positions, success
 
 if __name__=='__main__':   
