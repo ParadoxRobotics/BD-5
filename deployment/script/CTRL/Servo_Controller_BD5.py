@@ -30,6 +30,7 @@ class ServoControllerBD5():
             "head_pitch": 2, # XC430-W150-T
         }
         self.joint_ID_list = list(self.joints_ID.values())
+        self.joint_leg_ID_list = self.joint_ID_list[:10]
 
         # Joint limit in dxl value [min, max]
         self.joints_limit = {
@@ -98,7 +99,7 @@ class ServoControllerBD5():
         self.groupSyncWrite_pos = GroupSyncWrite(self.portHandler, self.packetHandler, self.ADDR_GOAL_POSITION, self.LEN_GOAL_POSITION)
         self.groupSyncRead_pos = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
 
-        for ids in self.joint_ID_list:
+        for ids in self.joint_leg_ID_list:
             # Add each motor to the bulk read list. 
             # Only the ID is needed here.
             addparam_result = self.groupSyncRead_pos.addParam(ids) # <-- CORRECTED LINE
@@ -130,15 +131,6 @@ class ServoControllerBD5():
         dxl_values = [int((self.MAX_POS/2) + (val / self.MAX_ANG) * (self.MAX_POS-1)) for val in value]
         dxl_values = [max(0, min(self.MAX_POS - 1, val)) for val in dxl_values]
         return dxl_values
-
-    # Get velocity in rad/s
-    def dxl2velocity(self, value):
-        # Velocity value coded on 32bits
-        for i in range(len(value)):
-            if value[i] >= 2 ** (4 * 8 - 1): 
-                value[i] = value[i] - 2 ** (4 * 8)
-            value[i] = (value[i] * 0.229) * self.rpm2rads  # unit 0.229 rpm -> to rad/s 
-        return value
 
     # Check error
     def checkError(self, dxl_comm_result, dxl_error):
@@ -231,12 +223,10 @@ class ServoControllerBD5():
 
     # Sync read servos value
     def syncRead(self, groupSyncRead, ids, address, length):
-
         dxl_comm_result = groupSyncRead.txRxPacket()
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
             return [], False
-
         states = []
         for id in ids:                    
             if groupSyncRead.isAvailable(id, address, length):
@@ -288,9 +278,9 @@ class ServoControllerBD5():
 
     # Set PID for the legs
     def set_PID(self, pid):
-        self.set_P_gain(ids=self.joint_ID_list[:10], value=[pid[0]] * len(self.joint_ID_list[:10]))
-        self.set_I_gain(ids=self.joint_ID_list[:10], value=[pid[1]] * len(self.joint_ID_list[:10]))
-        self.set_D_gain(ids=self.joint_ID_list[:10], value=[pid[2]] * len(self.joint_ID_list[:10]))
+        self.set_P_gain(ids=self.joint_leg_ID_list, value=[pid[0]] * len(self.joint_leg_ID_list))
+        self.set_I_gain(ids=self.joint_leg_ID_list, value=[pid[1]] * len(self.joint_leg_ID_list))
+        self.set_D_gain(ids=self.joint_leg_ID_list, value=[pid[2]] * len(self.joint_leg_ID_list))
 
     # Set goal position to all servos 
     def set_position(self, value):
@@ -303,22 +293,14 @@ class ServoControllerBD5():
         # send command
         self.syncWrite(self.groupSyncWrite_pos, self.joint_ID_list, ang_pos, self.LEN_GOAL_POSITION)
         
-    # Get current position 
-    def get_position(self, full=True):
-        if full:
-            # read raw position 
-            positions, success = self.syncRead(self.groupSyncRead_pos, self.joint_ID_list, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
-            # convert to radian 
-            positions = self.dxl2position(value=positions)
-            # correct rotation
-            positions = self.correctRotation(positions, self.joints_correction_list)
-        else:
-            # read raw position 
-            positions, success = self.syncRead(self.groupSyncRead_pos, self.joint_ID_list[:10], self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
-            # convert to radian 
-            positions = self.dxl2position(value=positions)
-            # correct rotation
-            positions = self.correctRotation(positions, self.joints_correction_list[:10])
+    # Get current position (only the legs)
+    def get_position(self):
+        # read raw position 
+        positions, success = self.syncRead(self.groupSyncRead_pos, self.joint_leg_ID_list, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
+        # convert to radian 
+        positions = self.dxl2position(value=positions)
+        # correct rotation
+        positions = self.correctRotation(positions, self.joints_correction_list)
         return positions, success
 
 if __name__=='__main__':   
@@ -397,7 +379,7 @@ if __name__=='__main__':
             if X_pressed == True:
                 print("Kill switch pressed !")
                 break
-            pos, state = BDX.get_position(full=True)
+            pos, state = BDX.get_position()
             BDX.set_position(default_angles_full)
             #print(pos)
             # time control 
