@@ -97,10 +97,12 @@ class ServoControllerBD5():
         # get sync group for read and write position 
         self.groupSyncWrite_pos = GroupSyncWrite(self.portHandler, self.packetHandler, self.ADDR_GOAL_POSITION, self.LEN_GOAL_POSITION)
         self.groupSyncRead_pos = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
-        # get sync group for reading velocity
-        #self.groupSyncRead_vel = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_VELOCITY, self.LEN_PRESENT_VELOCITY)
-        # get sync group for reading voltage
-        #self.groupSyncRead_volt = GroupSyncRead(self.portHandler, self.packetHandler, self.ADDR_PRESENT_VOLTAGE, self.LEN_PRESENT_VOLTAGE)
+
+        for ids in self.joint_ID_list:
+            # Add each motor to the bulk read list
+            addparam_result = self.groupSyncRead_pos.addParam(ids, self.ADDR_PRESENT_POSITION, self.LEN_PRESENT_POSITION)
+            if not addparam_result:
+                raise Exception(f"[ID:{ids}] GroupSyncRead addparam failed")
 
     # correct rotation 
     def correctRotation(self, value, joint_list):
@@ -227,12 +229,6 @@ class ServoControllerBD5():
 
     # Sync read servos value
     def syncRead(self, groupSyncRead, ids, address, length):
-        groupSyncRead.clearParam()
-        for id in ids:
-            dxl_addparam_result = groupSyncRead.addParam(id)
-            if dxl_addparam_result != True:
-                print("ID:%03d groupSyncRead addparam failed" % id)
-                return [], False
 
         dxl_comm_result = groupSyncRead.txRxPacket()
         if dxl_comm_result != COMM_SUCCESS:
@@ -304,26 +300,6 @@ class ServoControllerBD5():
         ang_pos = self.dxlClamp(value=ang_pos)
         # send command
         self.syncWrite(self.groupSyncWrite_pos, self.joint_ID_list, ang_pos, self.LEN_GOAL_POSITION)
-
-    """
-    # Get current velocity
-    def get_velocity(self, full=True):
-        if full:
-            # read raw angular velocity
-            velocities, success = self.syncRead(self.groupSyncRead_vel, self.joint_ID_list, self.ADDR_PRESENT_VELOCITY, self.LEN_PRESENT_VELOCITY)
-            # convert to rad/s
-            velocities = self.dxl2velocity(value=velocities)
-            # correct rotation
-            velocities = self.correctRotation(velocities, self.joints_correction_list)
-        else:
-            # read raw angular velocity
-            velocities, success = self.syncRead(self.groupSyncRead_vel, self.joint_ID_list[:10], self.ADDR_PRESENT_VELOCITY, self.LEN_PRESENT_VELOCITY)
-            # convert to rad/s
-            velocities = self.dxl2velocity(value=velocities)
-            # correct rotation
-            velocities = self.correctRotation(velocities, self.joints_correction_list[:10])
-        return velocities, success
-    """
         
     # Get current position 
     def get_position(self, full=True):
@@ -342,20 +318,6 @@ class ServoControllerBD5():
             # correct rotation
             positions = self.correctRotation(positions, self.joints_correction_list[:10])
         return positions, success
-
-    """
-    # Get voltage input 
-    def get_voltage(self, mean):
-        # read raw voltage
-        voltage, success = self.syncRead(self.groupSyncRead_volt, self.joint_ID_list, self.ADDR_PRESENT_VOLTAGE, self.LEN_PRESENT_VOLTAGE)     
-        # convert to volt
-        voltage = [v * 0.1 for v in voltage]
-        # return mean voltage for battery level
-        if mean and len(voltage) > 0:
-            return sum(voltage)/len(voltage), success
-        else:
-            return voltage, success
-    """
 
 if __name__=='__main__':   
     import time 
