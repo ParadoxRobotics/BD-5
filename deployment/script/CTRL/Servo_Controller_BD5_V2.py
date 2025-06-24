@@ -26,8 +26,8 @@ class ServoControllerBD5():
             "right_hip_pitch": 7, # XM430-W350-T
             "right_knee": 9, # XM430-W350-T
             "right_ankle": 11, # XM430-W350-T
-            #"neck_pitch": 1, # XC430-W150-T
-            #"head_pitch": 2, # XC430-W150-T
+            "neck_pitch": 1, # XC430-W150-T
+            "head_pitch": 2, # XC430-W150-T
         }
         self.joint_ID_list = list(self.joints_ID.values())
 
@@ -43,8 +43,8 @@ class ServoControllerBD5():
             "right_hip_pitch": [907,3188],
             "right_knee": [496,2048],
             "right_ankle": [816,3279],
-            #"neck_pitch": [1195,2680],
-            #"head_pitch": [1145,2925],
+            "neck_pitch": [1195,2680],
+            "head_pitch": [1145,2925],
         }
         self.joints_limit_list = list(self.joints_limit.values())
 
@@ -60,8 +60,8 @@ class ServoControllerBD5():
             "right_hip_pitch": -1,
             "right_knee": -1,
             "right_ankle": 1,
-            #"neck_pitch": -1,
-            #"head_pitch": 1,
+            "neck_pitch": -1,
+            "head_pitch": 1,
         }
         self.joints_correction_list = list(self.joints_correction.values())
         
@@ -238,17 +238,9 @@ class ServoControllerBD5():
 
     # Set PID for the legs
     def set_PID(self, pid):
-        self.set_P_gain(ids=self.joint_ID_list, value=[pid[0]] * len(self.joint_ID_list))
-        self.set_I_gain(ids=self.joint_ID_list, value=[pid[1]] * len(self.joint_ID_list))
-        self.set_D_gain(ids=self.joint_ID_list, value=[pid[2]] * len(self.joint_ID_list))
-
-    """
-    # Set PID for the legs
-    def set_PID(self, pid):
         self.set_P_gain(ids=self.joint_ID_list[:10], value=[pid[0]] * len(self.joint_ID_list[:10]))
         self.set_I_gain(ids=self.joint_ID_list[:10], value=[pid[1]] * len(self.joint_ID_list[:10]))
         self.set_D_gain(ids=self.joint_ID_list[:10], value=[pid[2]] * len(self.joint_ID_list[:10]))
-    """
 
     # Set goal position to all servos 
     def set_position(self, value):
@@ -345,10 +337,8 @@ if __name__=='__main__':
                           0.8725738534323367,
                           1.7451477068646735,
                           0.8725738534323367]
-    #default_angles_leg = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     default_angles_head = [0.5306, -0.5306]
-    #default_angles_full = default_angles_leg + default_angles_head
-    default_angles_full = default_angles_leg
+    default_angles_full = default_angles_leg + default_angles_head
     zeros_position = [0.0] * len(default_angles_full)
 
     while True:
