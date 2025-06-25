@@ -4,7 +4,7 @@ import numpy as np
 
 from dynamixel_sdk import *
 
-from CTRL.Servo_Controller_BD5_V2 import ServoControllerBD5
+from CTRL.Servo_Controller_BD5 import ServoControllerBD5
 from CTRL.IMU import IMU
 from CTRL.ONNX_infer import OnnxInfer
 from CTRL.Gamepad import Gamepad
@@ -22,7 +22,7 @@ class BD5RLController:
         history_len: int = 5,
         action_scale: float = 0.3,
         clip_motor_speed: bool = False,
-        pid: float = [800, 0, 0],
+        pid: float = [800, 0, 80],
         vel_range_x: float = [-0.4, 0.6],
         vel_range_y: float = [-0.4, 0.4],
         vel_range_rot: float = [-0.8, 0.8],
@@ -161,7 +161,7 @@ class BD5RLController:
         dxl_qpos, success_pos = self.servo.get_position() # Only recover the state of the legs
         if not success_pos or len(dxl_qpos) == 0:
             return None
-        current_qpos = np.array(dxl_qpos[:10]) # Only recover the state of the legs
+        current_qpos = np.array(dxl_qpos) # Only recover the state of the legs
         # get joint angles delta and velocities
         joint_angles = current_qpos - self._default_angles_leg
         # adjust phase
